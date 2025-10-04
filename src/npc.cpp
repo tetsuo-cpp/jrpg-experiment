@@ -2,11 +2,12 @@
 #include <raylib.h>
 #include <cmath>
 
-NPC::NPC(const std::string& name, int tileX, int tileY, int dialogId, int tileSize)
+NPC::NPC(const std::string& name, int tileX, int tileY, int dialogId, int tileSize, NPCType type)
     : m_name(name)
     , m_tileX(tileX)
     , m_tileY(tileY)
     , m_dialogId(dialogId)
+    , m_type(type)
     , m_tileSize(tileSize)
 {
     // Convert tile coordinates to pixel coordinates
@@ -28,9 +29,10 @@ void NPC::render(int cameraOffsetX, int cameraOffsetY) const {
     int screenX = m_pixelX - cameraOffsetX + 2;
     int screenY = m_pixelY - cameraOffsetY + 2;
 
-    // Draw NPC as a blue rectangle (same size as player: tileSize - 4)
+    // Draw NPC with different colors based on type
     int npcSize = m_tileSize - 4;
-    DrawRectangle(screenX, screenY, npcSize, npcSize, BLUE);
+    Color npcColor = (m_type == NPCType::SHOP) ? ORANGE : BLUE;
+    DrawRectangle(screenX, screenY, npcSize, npcSize, npcColor);
 
     // Draw a simple face-like pattern to distinguish from walls
     int eyeSize = npcSize / 8;

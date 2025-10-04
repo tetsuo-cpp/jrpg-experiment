@@ -160,13 +160,13 @@ void ExplorationScene::startDialog() {
 void ExplorationScene::initializeNPCs() {
     // Create test NPCs at various locations on the map
     // NPC 1: Friendly villager near the center
-    m_npcs.push_back(std::make_unique<NPC>("Villager", 10, 8, 1, m_tileSize));
+    m_npcs.push_back(std::make_unique<NPC>("Villager", 10, 8, 1, m_tileSize, NPCType::DIALOG));
 
     // NPC 2: Guard near a wall
-    m_npcs.push_back(std::make_unique<NPC>("Guard", 18, 12, 2, m_tileSize));
+    m_npcs.push_back(std::make_unique<NPC>("Guard", 18, 12, 2, m_tileSize, NPCType::DIALOG));
 
-    // NPC 3: Merchant in another area
-    m_npcs.push_back(std::make_unique<NPC>("Merchant", 7, 14, 3, m_tileSize));
+    // NPC 3: Merchant in another area (triggers shop)
+    m_npcs.push_back(std::make_unique<NPC>("Merchant", 7, 14, 3, m_tileSize, NPCType::SHOP));
 }
 
 void ExplorationScene::checkNPCInteraction() {
@@ -178,16 +178,21 @@ void ExplorationScene::checkNPCInteraction() {
         // Check all NPCs to see if player is adjacent
         for (const auto& npc : m_npcs) {
             if (npc->isPlayerAdjacent(playerTileX, playerTileY)) {
-                // Get dialog scene
-                DialogScene* dialogScene = static_cast<DialogScene*>(
-                    m_sceneManager->getScene(GameState::DIALOG));
+                if (npc->getType() == NPCType::SHOP) {
+                    // Transition to shop
+                    m_sceneManager->changeState(GameState::SHOP);
+                } else {
+                    // Get dialog scene
+                    DialogScene* dialogScene = static_cast<DialogScene*>(
+                        m_sceneManager->getScene(GameState::DIALOG));
 
-                if (dialogScene) {
-                    // Start dialog with this NPC's dialog ID
-                    dialogScene->startDialog(npc->getDialogId());
+                    if (dialogScene) {
+                        // Start dialog with this NPC's dialog ID
+                        dialogScene->startDialog(npc->getDialogId());
 
-                    // Transition to dialog
-                    m_sceneManager->changeState(GameState::DIALOG);
+                        // Transition to dialog
+                        m_sceneManager->changeState(GameState::DIALOG);
+                    }
                 }
 
                 // Only interact with one NPC at a time

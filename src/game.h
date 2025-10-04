@@ -23,6 +23,7 @@ private:
     void initializeGame();
     void initializeParty();
     void initializeInventory();
+    void initializeShop();
 
     // Game state
     bool m_running;
@@ -39,4 +40,5 @@ private:
     std::unique_ptr<SceneManager> m_sceneManager;
     std::unique_ptr<Party> m_party;
     std::unique_ptr<Inventory> m_inventory;
+    std::unique_ptr<class Shop> m_shop;  // Forward declare Shop
 };

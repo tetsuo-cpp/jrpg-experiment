@@ -74,6 +74,25 @@ bool Inventory::removeItem(Item* item, int quantity) {
     return true;
 }
 
+bool Inventory::removeItem(int slotIndex, int quantity) {
+    if (quantity <= 0) return false;
+    if (slotIndex < 0 || slotIndex >= m_items.size()) return false;
+    if (!m_items[slotIndex].item) return false;
+
+    if (m_items[slotIndex].quantity < quantity) {
+        return false;  // Not enough quantity
+    }
+
+    m_items[slotIndex].quantity -= quantity;
+
+    if (m_items[slotIndex].quantity == 0) {
+        delete m_items[slotIndex].item;
+        m_items[slotIndex].item = nullptr;
+    }
+
+    return true;
+}
+
 bool Inventory::hasItem(const std::string& itemName) const {
     return findSlot(itemName) != -1;
 }

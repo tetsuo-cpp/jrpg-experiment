@@ -1,6 +1,6 @@
 #include "party.h"
 
-Party::Party() {
+Party::Party() : m_gold(500) {
     m_activeMembers.reserve(MAX_ACTIVE_MEMBERS);
     m_reserveMembers.reserve(MAX_RESERVE_MEMBERS);
 }
@@ -145,4 +145,18 @@ void Party::gainExperienceAll(int exp) {
     for (auto& member : m_activeMembers) {
         member->getStats().gainExperience(exp);
     }
+}
+
+void Party::addGold(int amount) {
+    if (amount > 0) {
+        m_gold += amount;
+    }
+}
+
+bool Party::spendGold(int amount) {
+    if (amount <= 0 || amount > m_gold) {
+        return false;
+    }
+    m_gold -= amount;
+    return true;
 }

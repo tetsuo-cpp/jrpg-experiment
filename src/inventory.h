@@ -18,6 +18,7 @@ public:
     // Item management
     bool addItem(const Item& item, int quantity = 1);
     bool removeItem(Item* item, int quantity = 1);
+    bool removeItem(int slotIndex, int quantity = 1);  // Remove by slot index
     bool hasItem(const std::string& itemName) const;
     int getItemCount(Item* item) const;
 

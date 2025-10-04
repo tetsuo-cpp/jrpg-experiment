@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A classic JRPG built with C++ and Raylib. The project follows a phased development roadmap (see ROADMAP.md). Phase 1 (Foundation), Phase 2 (Core RPG Mechanics), Phase 3 (Battle System), Phase 4 (Progression Systems), and Phase 5 Task 1 (Menu System) are complete.
+A classic JRPG built with C++ and Raylib. The project follows a phased development roadmap (see ROADMAP.md). Phase 1 (Foundation), Phase 2 (Core RPG Mechanics), Phase 3 (Battle System), Phase 4 (Progression Systems), and Phase 5 (UI & Interaction) are complete.
 
 ## Build Commands
 
@@ -42,9 +42,9 @@ The game uses a modular component architecture where each system is owned by the
 
 - **PartyMember** (`party_member.h/cpp`) - Represents individual party members with a name, character class (Warrior, Mage, Cleric, Thief), and CharacterStats. Supports sprite/portrait paths for future visual representation.
 
-- **Party** (`party.h/cpp`) - Manages the player's party with up to 4 active members and 8 reserve members. Provides party-wide operations like healing all, restoring MP, and gaining experience. Includes member swapping and reserve management.
+- **Party** (`party.h/cpp`) - Manages the player's party with up to 4 active members and 8 reserve members. Provides party-wide operations like healing all, restoring MP, and gaining experience. Includes member swapping and reserve management. Gold tracking system with starting balance of 500 gold.
 
-- **SceneManager** (`scene_manager.h/cpp`) - Unified state and scene management using GameState enum (EXPLORATION, BATTLE, MENU, DIALOG). Scenes are created once and kept alive (never destroyed) to avoid memory issues. Direct enum-based transitions via `changeState()`.
+- **SceneManager** (`scene_manager.h/cpp`) - Unified state and scene management using GameState enum (EXPLORATION, BATTLE, MENU, DIALOG, SHOP). Scenes are created once and kept alive (never destroyed) to avoid memory issues. Direct enum-based transitions via `changeState()`.
 
 - **Scene** (`scene.h`) - Abstract base class for all game scenes. Defines the interface for scene lifecycle (onEnter/onExit) and main loop methods (update/draw).
 
@@ -95,7 +95,40 @@ Movement interpolates between tile positions for smooth animation. All rendering
   - **Save Submenu**: Placeholder for Phase 6 implementation
   - Uses callback system to return to exploration scene
 
-- **Party** (extended) - Added `getActiveMembers()` methods that return vectors of PartyMember pointers for UI iteration
+- **DialogScene** (`dialog_scene.h/cpp`) - Dialog system for NPC conversations:
+  - Text box UI with speaker names and text wrapping
+  - Multi-line dialog sequences with SPACE/ENTER to advance
+  - Choice system with arrow key navigation for dialog branching
+  - Dialog registration by ID for NPC triggers
+  - ESC to close dialog (when no choices active)
+  - Callback system to return to previous scene
+
+- **NPC** (`npc.h/cpp`) - Non-player character system:
+  - NPCType enum (DIALOG or SHOP) to determine interaction behavior
+  - Position tracking (tile and pixel coordinates)
+  - Adjacent detection for player interaction (1 tile away in cardinal directions)
+  - Visual distinction (blue for dialog NPCs, orange for shop NPCs)
+  - Dialog ID for triggering specific conversations
+  - Interaction via SPACE/ENTER when adjacent
+
+- **Shop** (`shop.h/cpp`) - Shop inventory and transaction management:
+  - Shop-owned item copies with unlimited (-1) or limited stock
+  - Support for both consumables and equipment
+  - Stock tracking and depletion on purchase
+  - Buy/sell price integration with Item system
+
+- **ShopScene** (`shop_scene.h/cpp`) - Shop interface for buying/selling:
+  - **Main Menu**: Buy, Sell, Leave options
+  - **Buy Screen**: Scrollable shop inventory (12 items per page), price display, stock indicators (∞ or quantity), gold check before purchase
+  - **Sell Screen**: Scrollable player inventory, sell price display, quantity tracking
+  - **Confirmation Screens**: Quantity adjustment (left/right arrows), total cost/value display, affordability check
+  - Gold display in top-right corner
+  - Automatic inventory updates on transactions
+  - Callback system to return to exploration
+
+- **Party** (extended) - Added `getActiveMembers()` methods that return vectors of PartyMember pointers for UI iteration. Gold management with `getGold()`, `addGold()`, `spendGold()` methods.
+
+- **Inventory** (extended) - Added `removeItem(int slotIndex, int quantity)` overload for shop selling by index
 
 ### Development Phases
 The project follows ROADMAP.md:
@@ -103,7 +136,8 @@ The project follows ROADMAP.md:
 - **Phase 2 (Core RPG Mechanics)** ✅ - Character stats, party management, unified state/scene management
 - **Phase 3 (Battle System)** ✅ - Turn-based battles, enemy system, combat mechanics, battle UI
 - **Phase 4 (Progression Systems)** ✅ - Inventory, equipment, magic/skills, leveling with stat growth
-- **Phase 5 (UI & Interaction)** - In Progress: ✅ Menu system | Next: Dialog, NPCs, shops
+- **Phase 5 (UI & Interaction)** ✅ - Menu system, dialog system, NPC system, shop system
+- **Phase 6 (Persistence & Polish)** - Next: Save/Load, sound effects, music, transitions
 
 ## Code Patterns
 
@@ -113,8 +147,11 @@ The project follows ROADMAP.md:
 - State transitions use `SceneManager::changeState(GameState)` - single call, enum-based
 - Access other scenes via `SceneManager::getScene(GameState)` - safe, always valid
 - Map data is defined in `ExplorationScene::initializeMap()` for the exploration scene
-- The Party system is initialized with 3 test characters (Hero/Warrior, Mage, Cleric) in `Game::initializeParty()`
+- The Party system is initialized with 3 test characters (Hero/Warrior, Mage, Cleric) and 500 gold in `Game::initializeParty()`
 - Inventory is initialized with test items (consumables: Potions, Hi-Potions, Ethers, Elixirs; equipment: Iron Sword, Steel Sword, Magic Staff, Leather Armor, Chain Mail, Mage Robe, Power Ring, HP Ring) in `Game::initializeInventory()`
+- Shop is initialized with various items and equipment (potions, weapons, armor, accessories) with mixed unlimited and limited stock in `Game::initializeShop()`
+- NPCs are initialized in `ExplorationScene::initializeNPCs()` - Villager (10,8), Guard (18,12), Merchant (7,14)
+- Dialogs are registered in `Game::initializeGame()` with IDs 1-5 for different NPC conversations
 - Characters learn class-specific skills on initialization
 - Tile size is 32px, map is 30x20 tiles, window is 800x600px
 - Game::update/draw simply delegate to SceneManager - no state checking needed
@@ -153,3 +190,21 @@ The project follows ROADMAP.md:
 - When equipping, removes from inventory (doesn't delete), then transfers raw pointer to party member via `reset()`
 - Item usage in field properly handles HP/MP restoration and item consumption via Inventory::removeItem()
 - Window can only be closed via the OS window close button (not ESC)
+
+### Dialog System
+- DialogScene is created and registered in `Game::initializeGame()` with callback to return to exploration
+- Dialog instances are registered with unique IDs (1-5 for test NPCs)
+- Dialog supports multi-line sequences, speaker names, and choice branching
+- Choice system allows jumping to different dialog IDs or ending conversation (-1)
+- Press SPACE/ENTER to advance dialog, arrow keys to select choices
+- ESC closes dialog (only when not showing choices)
+
+### NPC & Shop System
+- NPCs are placed on the tilemap with NPCType (DIALOG or SHOP)
+- Press SPACE/ENTER when adjacent to NPC to interact
+- DIALOG NPCs trigger DialogScene with their dialog ID
+- SHOP NPCs trigger ShopScene directly
+- Shop owned by Game class, initialized with items in `initializeShop()`
+- ShopScene handles all buy/sell transactions with gold and inventory integration
+- Visual distinction: Blue NPCs = dialog, Orange NPCs = shop
+- Current NPCs: Villager (dialog), Guard (dialog with choices), Merchant (shop)

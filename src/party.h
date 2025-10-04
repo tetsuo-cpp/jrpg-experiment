@@ -38,10 +38,16 @@ public:
     void restoreAllMP(int amount);
     void gainExperienceAll(int exp);
 
+    // Gold management
+    int getGold() const { return m_gold; }
+    void addGold(int amount);
+    bool spendGold(int amount);
+
     static constexpr int MAX_ACTIVE_MEMBERS = 4;
     static constexpr int MAX_RESERVE_MEMBERS = 8;
 
 private:
     std::vector<std::unique_ptr<PartyMember>> m_activeMembers;
     std::vector<std::unique_ptr<PartyMember>> m_reserveMembers;
+    int m_gold;
 };

@@ -8,7 +8,8 @@ enum class GameState {
     EXPLORATION,
     BATTLE,
     MENU,
-    DIALOG
+    DIALOG,
+    SHOP
 };
 
 class SceneManager {
@@ -33,7 +34,7 @@ public:
     void draw();
 
 private:
-    std::array<std::unique_ptr<Scene>, 4> m_scenes;
+    std::array<std::unique_ptr<Scene>, 5> m_scenes;
     Scene* m_currentScene;
     GameState m_currentState;
     GameState m_previousState;

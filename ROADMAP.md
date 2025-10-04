@@ -30,11 +30,11 @@ This roadmap outlines the logical progression for building core JRPG systems bef
 19. ✅ **Magic/Skill System** - Spells, abilities, MP costs
 20. ✅ **Leveling System** - Experience, stat growth, skill learning
 
-## Phase 5: UI & Interaction
+## Phase 5: UI & Interaction ✅ COMPLETED
 21. ✅ **Menu System** - Main menu (Status, Items, Equipment, Save)
 22. ✅ **Dialog System** - Text boxes, portraits, choices
 23. ✅ **NPC System** - Interact with NPCs, trigger dialogs
-24. **Shop System** - Buy/sell items and equipment
+24. ✅ **Shop System** - Buy/sell items and equipment
 
 ## Phase 6: Persistence & Polish
 25. **Save/Load System** - Save game state to disk

@@ -3,11 +3,13 @@
 #include "battle_scene.h"
 #include "menu_scene.h"
 #include "dialog_scene.h"
+#include "shop_scene.h"
 #include "enemy.h"
 #include "enemy_formation.h"
 #include "item.h"
 #include "equipment.h"
 #include "skill.h"
+#include "shop.h"
 
 Game::Game() : m_running(true) {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "JRPG Game");
@@ -20,10 +22,12 @@ Game::Game() : m_running(true) {
     m_sceneManager = std::make_unique<SceneManager>();
     m_party = std::make_unique<Party>();
     m_inventory = std::make_unique<Inventory>();
+    m_shop = std::make_unique<Shop>("General Store", "Welcome! Take a look at my wares!");
 
     initializeGame();
     initializeParty();
     initializeInventory();
+    initializeShop();
 }
 
 Game::~Game() {
@@ -119,6 +123,14 @@ void Game::initializeGame() {
 
     m_sceneManager->registerScene(GameState::DIALOG, std::move(dialogScene));
 
+    // Create shop scene
+    auto shopScene = std::make_unique<ShopScene>(m_party.get(), m_inventory.get());
+    shopScene->setShop(m_shop.get());
+    shopScene->setReturnCallback([this]() {
+        m_sceneManager->changeState(GameState::EXPLORATION);
+    });
+    m_sceneManager->registerScene(GameState::SHOP, std::move(shopScene));
+
     // Start in exploration
     m_sceneManager->changeState(GameState::EXPLORATION);
 }
@@ -180,4 +192,42 @@ void Game::initializeInventory() {
         EquipmentType::ACCESSORY, 5, 5, 0, 0, 150, 75), 1);
     m_inventory->addItem(Equipment("HP Ring", "Increases maximum HP",
         EquipmentType::ACCESSORY, 0, 0, 50, 0, 120, 60), 1);
+}
+
+void Game::initializeShop() {
+    // Add consumable items to shop
+    m_shop->addItem(Item("Potion", "Restores 50 HP",
+        ItemType::CONSUMABLE, ItemEffect::RESTORE_HP, 50, 50, 25), -1);  // Unlimited stock
+    m_shop->addItem(Item("Hi-Potion", "Restores 100 HP",
+        ItemType::CONSUMABLE, ItemEffect::RESTORE_HP, 100, 100, 50), -1);
+    m_shop->addItem(Item("Ether", "Restores 30 MP",
+        ItemType::CONSUMABLE, ItemEffect::RESTORE_MP, 30, 80, 40), -1);
+    m_shop->addItem(Item("Elixir", "Fully restores HP and MP",
+        ItemType::CONSUMABLE, ItemEffect::RESTORE_BOTH, 9999, 500, 250), 3);  // Limited stock
+
+    // Add weapons to shop
+    m_shop->addEquipment(Equipment("Iron Sword", "A basic iron sword",
+        EquipmentType::WEAPON, 15, 0, 0, 0, 100, 50), 5);
+    m_shop->addEquipment(Equipment("Steel Sword", "A stronger steel sword",
+        EquipmentType::WEAPON, 25, 0, 0, 0, 250, 125), 3);
+    m_shop->addEquipment(Equipment("Magic Staff", "A staff imbued with magic",
+        EquipmentType::WEAPON, 10, 0, 0, 20, 200, 100), 3);
+    m_shop->addEquipment(Equipment("Bronze Axe", "A heavy bronze axe",
+        EquipmentType::WEAPON, 30, 0, 0, 0, 300, 150), 2);
+
+    // Add armor to shop
+    m_shop->addEquipment(Equipment("Leather Armor", "Basic leather protection",
+        EquipmentType::ARMOR, 0, 10, 0, 0, 80, 40), 5);
+    m_shop->addEquipment(Equipment("Chain Mail", "Heavy chain armor",
+        EquipmentType::ARMOR, 0, 20, 0, 0, 200, 100), 3);
+    m_shop->addEquipment(Equipment("Mage Robe", "Robes for magic users",
+        EquipmentType::ARMOR, 0, 8, 0, 15, 150, 75), 3);
+
+    // Add accessories to shop
+    m_shop->addEquipment(Equipment("Power Ring", "Increases attack power",
+        EquipmentType::ACCESSORY, 5, 5, 0, 0, 150, 75), 2);
+    m_shop->addEquipment(Equipment("HP Ring", "Increases maximum HP",
+        EquipmentType::ACCESSORY, 0, 0, 50, 0, 120, 60), 2);
+    m_shop->addEquipment(Equipment("MP Ring", "Increases maximum MP",
+        EquipmentType::ACCESSORY, 0, 0, 0, 30, 120, 60), 2);
 }

@@ -36,6 +36,8 @@ add_executable(jrpg_game
     src/equipment.cpp
     src/skill.cpp
     src/npc.cpp
+    src/shop.cpp
+    src/shop_scene.cpp
 )
 
 target_include_directories(jrpg_game PRIVATE src include)
