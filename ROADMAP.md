@@ -32,7 +32,7 @@ This roadmap outlines the logical progression for building core JRPG systems bef
 
 ## Phase 5: UI & Interaction
 21. ✅ **Menu System** - Main menu (Status, Items, Equipment, Save)
-22. **Dialog System** - Text boxes, portraits, choices
+22. ✅ **Dialog System** - Text boxes, portraits, choices
 23. **NPC System** - Interact with NPCs, trigger dialogs
 24. **Shop System** - Buy/sell items and equipment
 

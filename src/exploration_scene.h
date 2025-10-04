@@ -27,6 +27,7 @@ public:
 private:
     void initializeMap();
     void startBattle();
+    void startDialog();
 
     std::string m_name;
     std::unique_ptr<Tilemap> m_tilemap;

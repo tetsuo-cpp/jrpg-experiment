@@ -30,13 +30,14 @@ add_executable(jrpg_game
     src/enemy_formation.cpp
     src/battle_scene.cpp
     src/menu_scene.cpp
+    src/dialog_scene.cpp
     src/item.cpp
     src/inventory.cpp
     src/equipment.cpp
     src/skill.cpp
 )
 
-target_include_directories(jrpg_game PRIVATE src)
+target_include_directories(jrpg_game PRIVATE src include)
 target_link_libraries(jrpg_game PRIVATE raylib)
 
 # Copy assets to build directory

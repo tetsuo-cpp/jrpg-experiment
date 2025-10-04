@@ -1,5 +1,6 @@
 #include "exploration_scene.h"
 #include "battle_scene.h"
+#include "dialog_scene.h"
 #include "enemy.h"
 #include "enemy_formation.h"
 #include <raylib.h>
@@ -50,6 +51,11 @@ void ExplorationScene::update(float deltaTime) {
         startBattle();
     }
 
+    // Press T to trigger dialog (for testing)
+    if (IsKeyPressed(KEY_T)) {
+        startDialog();
+    }
+
     // Press ESC or M to open menu
     if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_M)) {
         m_sceneManager->changeState(GameState::MENU);
@@ -68,7 +74,8 @@ void ExplorationScene::draw() {
     DrawText("Exploration Mode", 10, 10, 20, WHITE);
     DrawText("WASD/Arrows to move", 10, 35, 16, LIGHTGRAY);
     DrawText("Press B for battle (test)", 10, 55, 16, LIGHTGRAY);
-    DrawText("Press ESC/M for menu", 10, 75, 16, LIGHTGRAY);
+    DrawText("Press T for dialog (test)", 10, 75, 16, LIGHTGRAY);
+    DrawText("Press ESC/M for menu", 10, 95, 16, LIGHTGRAY);
 }
 
 void ExplorationScene::initializeMap() {
@@ -124,4 +131,18 @@ void ExplorationScene::startBattle() {
 
     // Transition to battle
     m_sceneManager->changeState(GameState::BATTLE);
+}
+
+void ExplorationScene::startDialog() {
+    // Get dialog scene (it's already created and alive)
+    DialogScene* dialogScene = static_cast<DialogScene*>(
+        m_sceneManager->getScene(GameState::DIALOG));
+
+    if (dialogScene) {
+        // Start with test dialog ID 1
+        dialogScene->startDialog(1);
+    }
+
+    // Transition to dialog
+    m_sceneManager->changeState(GameState::DIALOG);
 }

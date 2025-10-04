@@ -2,6 +2,7 @@
 #include "exploration_scene.h"
 #include "battle_scene.h"
 #include "menu_scene.h"
+#include "dialog_scene.h"
 #include "enemy.h"
 #include "enemy_formation.h"
 #include "item.h"
@@ -72,6 +73,28 @@ void Game::initializeGame() {
         m_sceneManager->changeState(GameState::EXPLORATION);
     });
     m_sceneManager->registerScene(GameState::MENU, std::move(menuScene));
+
+    // Create dialog scene
+    auto dialogScene = std::make_unique<DialogScene>();
+    dialogScene->setReturnCallback([this]() {
+        m_sceneManager->changeState(GameState::EXPLORATION);
+    });
+
+    // Register some test dialogs
+    auto testDialog1 = std::make_unique<Dialog>(1);
+    testDialog1->addLine("Welcome to our village, traveler!", "Village Elder");
+    testDialog1->addLine("We've been having trouble with monsters lately.", "Village Elder");
+    testDialog1->addLine("Could you help us?", "Village Elder");
+    testDialog1->addChoice("Of course, I'll help!", 2);
+    testDialog1->addChoice("Sorry, I'm busy right now.", -1);
+    dialogScene->registerDialog(std::move(testDialog1));
+
+    auto testDialog2 = std::make_unique<Dialog>(2);
+    testDialog2->addLine("Thank you so much! The monsters are to the north.", "Village Elder");
+    testDialog2->addLine("May the spirits guide you on your journey!", "Village Elder");
+    dialogScene->registerDialog(std::move(testDialog2));
+
+    m_sceneManager->registerScene(GameState::DIALOG, std::move(dialogScene));
 
     // Start in exploration
     m_sceneManager->changeState(GameState::EXPLORATION);
