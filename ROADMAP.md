@@ -2,13 +2,13 @@
 
 This roadmap outlines the logical progression for building core JRPG systems before writing the story.
 
-## Phase 1: Foundation (Movement & World)
-1. **Tilemap/Map System** - Render tile-based maps from data (2D arrays or files)
-2. **Sprite System** - Load and render animated sprites
-3. **Player Character** - Basic player entity with position and sprite
-4. **Input & Movement** - 4-directional movement with keyboard/gamepad
-5. **Collision Detection** - Tile-based collision (walls, blocked tiles)
-6. **Camera System** - Follow player, handle screen boundaries
+## Phase 1: Foundation (Movement & World) ✅ COMPLETED
+1. ✅ **Tilemap/Map System** - Render tile-based maps from data (2D arrays or files)
+2. ✅ **Sprite System** - Load and render animated sprites
+3. ✅ **Player Character** - Basic player entity with position and sprite
+4. ✅ **Input & Movement** - 4-directional movement with keyboard/gamepad
+5. ✅ **Collision Detection** - Tile-based collision (walls, blocked tiles)
+6. ✅ **Camera System** - Follow player, handle screen boundaries
 
 ## Phase 2: Core RPG Mechanics
 7. **Character Stats System** - HP, MP, Attack, Defense, Level, Experience

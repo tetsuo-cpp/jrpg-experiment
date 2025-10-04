@@ -17,6 +17,10 @@ FetchContent_MakeAvailable(raylib)
 add_executable(jrpg_game
     src/main.cpp
     src/game.cpp
+    src/tilemap.cpp
+    src/sprite.cpp
+    src/player.cpp
+    src/camera.cpp
 )
 
 target_include_directories(jrpg_game PRIVATE src)
