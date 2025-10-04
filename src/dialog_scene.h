@@ -1,7 +1,7 @@
 #pragma once
 
 #include "scene.h"
-#include "../include/dialog.h"
+#include "dialog.h"
 #include <functional>
 #include <memory>
 #include <unordered_map>
