@@ -1,4 +1,5 @@
 #include "party_member.h"
+#include <algorithm>
 
 PartyMember::PartyMember(const std::string& name, CharacterClass characterClass, int level)
     : m_name(name)
@@ -6,4 +7,90 @@ PartyMember::PartyMember(const std::string& name, CharacterClass characterClass,
     , m_stats(level)
     , m_spritePath("assets/player.png") // Default for now
 {
+}
+
+bool PartyMember::equipWeapon(std::unique_ptr<Equipment> weapon) {
+    if (!weapon || weapon->getType() != EquipmentType::WEAPON) {
+        return false;
+    }
+    m_weapon = std::move(weapon);
+    recalculateEquipmentBonuses();
+    return true;
+}
+
+bool PartyMember::equipArmor(std::unique_ptr<Equipment> armor) {
+    if (!armor || armor->getType() != EquipmentType::ARMOR) {
+        return false;
+    }
+    m_armor = std::move(armor);
+    recalculateEquipmentBonuses();
+    return true;
+}
+
+bool PartyMember::equipAccessory(std::unique_ptr<Equipment> accessory) {
+    if (!accessory || accessory->getType() != EquipmentType::ACCESSORY) {
+        return false;
+    }
+    m_accessory = std::move(accessory);
+    recalculateEquipmentBonuses();
+    return true;
+}
+
+std::unique_ptr<Equipment> PartyMember::unequipWeapon() {
+    auto weapon = std::move(m_weapon);
+    recalculateEquipmentBonuses();
+    return weapon;
+}
+
+std::unique_ptr<Equipment> PartyMember::unequipArmor() {
+    auto armor = std::move(m_armor);
+    recalculateEquipmentBonuses();
+    return armor;
+}
+
+std::unique_ptr<Equipment> PartyMember::unequipAccessory() {
+    auto accessory = std::move(m_accessory);
+    recalculateEquipmentBonuses();
+    return accessory;
+}
+
+void PartyMember::recalculateEquipmentBonuses() {
+    int totalHP = 0;
+    int totalMP = 0;
+    int totalAttack = 0;
+    int totalDefense = 0;
+
+    if (m_weapon) {
+        totalHP += m_weapon->getHPBonus();
+        totalMP += m_weapon->getMPBonus();
+        totalAttack += m_weapon->getAttackBonus();
+        totalDefense += m_weapon->getDefenseBonus();
+    }
+
+    if (m_armor) {
+        totalHP += m_armor->getHPBonus();
+        totalMP += m_armor->getMPBonus();
+        totalAttack += m_armor->getAttackBonus();
+        totalDefense += m_armor->getDefenseBonus();
+    }
+
+    if (m_accessory) {
+        totalHP += m_accessory->getHPBonus();
+        totalMP += m_accessory->getMPBonus();
+        totalAttack += m_accessory->getAttackBonus();
+        totalDefense += m_accessory->getDefenseBonus();
+    }
+
+    m_stats.setEquipmentBonuses(totalHP, totalMP, totalAttack, totalDefense);
+}
+
+void PartyMember::learnSkill(const Skill& skill) {
+    if (!hasSkill(skill.getName())) {
+        m_skills.push_back(skill);
+    }
+}
+
+bool PartyMember::hasSkill(const std::string& skillName) const {
+    return std::find_if(m_skills.begin(), m_skills.end(),
+        [&skillName](const Skill& s) { return s.getName() == skillName; }) != m_skills.end();
 }

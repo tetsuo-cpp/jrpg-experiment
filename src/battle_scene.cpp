@@ -4,14 +4,19 @@
 #include <cstdlib>
 #include <ctime>
 
-BattleScene::BattleScene(Party* party)
+BattleScene::BattleScene(Party* party, Inventory* inventory)
     : m_name("Battle")
     , m_party(party)
+    , m_inventory(inventory)
     , m_enemyFormation(nullptr)
     , m_battleState(BattleState::TURN_START)
     , m_currentActorIndex(0)
     , m_selectedCommand(BattleCommand::ATTACK)
     , m_selectedTarget(0)
+    , m_selectedSkillIndex(0)
+    , m_selectedItemIndex(0)
+    , m_selectedSkill(nullptr)
+    , m_selectedItem(nullptr)
 {
     // Seed random for combat calculations
     static bool seeded = false;
@@ -87,6 +92,18 @@ void BattleScene::update(float deltaTime) {
             handlePlayerInput();
             break;
 
+        case BattleState::SKILL_SELECT:
+            handleSkillSelect();
+            break;
+
+        case BattleState::ITEM_SELECT:
+            handleItemSelect();
+            break;
+
+        case BattleState::TARGET_SELECT:
+            handleTargetSelect();
+            break;
+
         case BattleState::ENEMY_SELECT:
             handleEnemyAI();
             break;
@@ -139,16 +156,145 @@ void BattleScene::handlePlayerInput() {
             (static_cast<int>(m_selectedCommand) + 1) % 5);
     }
 
-    // Target selection (for now, just cycle through enemies)
-    if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
-        m_selectedTarget = (m_selectedTarget - 1 + m_enemyFormation->getEnemies().size())
-            % m_enemyFormation->getEnemies().size();
+    // Confirm action
+    if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
+        switch (m_selectedCommand) {
+            case BattleCommand::ATTACK:
+                m_selectedTarget = 0;
+                m_battleState = BattleState::TARGET_SELECT;
+                break;
+            case BattleCommand::MAGIC:
+                m_selectedSkillIndex = 0;
+                m_battleState = BattleState::SKILL_SELECT;
+                break;
+            case BattleCommand::ITEM:
+                m_selectedItemIndex = 0;
+                m_battleState = BattleState::ITEM_SELECT;
+                break;
+            case BattleCommand::DEFEND:
+            case BattleCommand::RUN:
+                m_battleState = BattleState::EXECUTING_ACTION;
+                break;
+        }
     }
-    if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
-        m_selectedTarget = (m_selectedTarget + 1) % m_enemyFormation->getEnemies().size();
+}
+
+void BattleScene::handleSkillSelect() {
+    BattleActor& actor = m_turnOrder[m_currentActorIndex];
+    PartyMember* member = m_party->getActiveMember(actor.index);
+    if (!member) return;
+
+    const auto& skills = member->getSkills();
+    if (skills.empty()) {
+        // No skills, go back
+        m_battleState = BattleState::PLAYER_SELECT;
+        return;
     }
 
-    // Confirm action
+    // Navigate skills
+    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) {
+        m_selectedSkillIndex = (m_selectedSkillIndex - 1 + skills.size()) % skills.size();
+    }
+    if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) {
+        m_selectedSkillIndex = (m_selectedSkillIndex + 1) % skills.size();
+    }
+
+    // Back
+    if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE)) {
+        m_battleState = BattleState::PLAYER_SELECT;
+        return;
+    }
+
+    // Confirm skill
+    if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
+        m_selectedSkill = &skills[m_selectedSkillIndex];
+        // Check if enough MP
+        if (!member->getStats().hasEnoughMP(m_selectedSkill->getMPCost())) {
+            m_selectedSkill = nullptr;
+            return;  // Not enough MP, stay in skill select
+        }
+        m_selectedTarget = 0;
+        m_battleState = BattleState::TARGET_SELECT;
+    }
+}
+
+void BattleScene::handleItemSelect() {
+    auto items = m_inventory->getAllItems();
+    // Filter to only usable battle items
+    std::vector<std::pair<Item, int>> usableItems;
+    for (const auto& pair : items) {
+        if (pair.first.isUsableInBattle()) {
+            usableItems.push_back(pair);
+        }
+    }
+
+    if (usableItems.empty()) {
+        // No items, go back
+        m_battleState = BattleState::PLAYER_SELECT;
+        return;
+    }
+
+    // Navigate items
+    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) {
+        m_selectedItemIndex = (m_selectedItemIndex - 1 + usableItems.size()) % usableItems.size();
+    }
+    if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) {
+        m_selectedItemIndex = (m_selectedItemIndex + 1) % usableItems.size();
+    }
+
+    // Back
+    if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE)) {
+        m_battleState = BattleState::PLAYER_SELECT;
+        return;
+    }
+
+    // Confirm item
+    if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
+        m_selectedItem = &usableItems[m_selectedItemIndex].first;
+        m_selectedTarget = 0;
+        m_battleState = BattleState::TARGET_SELECT;
+    }
+}
+
+void BattleScene::handleTargetSelect() {
+    // Determine if targeting enemies or allies
+    bool targetingEnemies = true;
+    int maxTargets = m_enemyFormation->getEnemies().size();
+
+    if (m_selectedSkill) {
+        targetingEnemies = m_selectedSkill->targetsEnemy();
+        if (!targetingEnemies) {
+            maxTargets = m_party->getActiveCount();
+        }
+    } else if (m_selectedItem) {
+        // Items target allies (healing items)
+        targetingEnemies = false;
+        maxTargets = m_party->getActiveCount();
+    }
+
+    // Navigate targets
+    if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
+        m_selectedTarget = (m_selectedTarget - 1 + maxTargets) % maxTargets;
+    }
+    if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
+        m_selectedTarget = (m_selectedTarget + 1) % maxTargets;
+    }
+
+    // Back
+    if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE)) {
+        if (m_selectedSkill) {
+            m_selectedSkill = nullptr;
+            m_battleState = BattleState::SKILL_SELECT;
+        } else if (m_selectedItem) {
+            m_selectedItem = nullptr;
+            m_battleState = BattleState::ITEM_SELECT;
+        } else {
+            m_battleState = BattleState::PLAYER_SELECT;
+        }
+        return;
+    }
+
+    // Confirm target
     if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
         m_battleState = BattleState::EXECUTING_ACTION;
     }
@@ -210,6 +356,68 @@ void BattleScene::executeAction() {
                 break;
             }
 
+            case BattleCommand::MAGIC: {
+                if (m_selectedSkill) {
+                    // Use MP
+                    member->getStats().useMP(m_selectedSkill->getMPCost());
+
+                    if (m_selectedSkill->isOffensive()) {
+                        // Offensive magic targets enemies
+                        Enemy* target = m_enemyFormation->getEnemy(m_selectedTarget);
+                        if (target && target->getStats().isAlive()) {
+                            int damage = calculateSkillDamage(*m_selectedSkill, member->getStats());
+                            target->getStats().takeDamage(damage);
+                        }
+                    } else if (m_selectedSkill->isHealing()) {
+                        // Healing magic targets allies
+                        if (m_selectedSkill->isMultiTarget()) {
+                            // Heal all party members
+                            for (size_t i = 0; i < m_party->getActiveCount(); ++i) {
+                                PartyMember* ally = m_party->getActiveMember(i);
+                                if (ally) {
+                                    ally->getStats().heal(m_selectedSkill->getPower());
+                                }
+                            }
+                        } else {
+                            // Heal single target
+                            PartyMember* target = m_party->getActiveMember(m_selectedTarget);
+                            if (target) {
+                                target->getStats().heal(m_selectedSkill->getPower());
+                            }
+                        }
+                    }
+                    m_selectedSkill = nullptr;
+                }
+                break;
+            }
+
+            case BattleCommand::ITEM: {
+                if (m_selectedItem) {
+                    PartyMember* target = m_party->getActiveMember(m_selectedTarget);
+                    if (target) {
+                        // Apply item effect
+                        switch (m_selectedItem->getEffect()) {
+                            case ItemEffect::RESTORE_HP:
+                                target->getStats().heal(m_selectedItem->getEffectPower());
+                                break;
+                            case ItemEffect::RESTORE_MP:
+                                target->getStats().restoreMP(m_selectedItem->getEffectPower());
+                                break;
+                            case ItemEffect::RESTORE_BOTH:
+                                target->getStats().heal(m_selectedItem->getEffectPower());
+                                target->getStats().restoreMP(m_selectedItem->getEffectPower());
+                                break;
+                            default:
+                                break;
+                        }
+                        // Remove item from inventory
+                        m_inventory->removeItem(m_selectedItem->getName(), 1);
+                    }
+                    m_selectedItem = nullptr;
+                }
+                break;
+            }
+
             case BattleCommand::DEFEND:
                 // TODO: Implement defense boost for next turn
                 break;
@@ -222,11 +430,6 @@ void BattleScene::executeAction() {
                 }
                 break;
             }
-
-            case BattleCommand::MAGIC:
-            case BattleCommand::ITEM:
-                // TODO: Implement magic and item usage
-                break;
         }
     } else {
         // Enemy turn
@@ -299,6 +502,12 @@ int BattleScene::calculateDamage(const CharacterStats& attacker, const Character
     return std::max(1, damage);
 }
 
+int BattleScene::calculateSkillDamage(const Skill& skill, const CharacterStats& attacker) {
+    // Skill damage uses the skill's power directly
+    // Could add attacker's magic stat later for scaling
+    return skill.getPower();
+}
+
 bool BattleScene::checkHit() {
     // 90% base hit chance
     return (std::rand() % 100) < 90;
@@ -320,6 +529,15 @@ void BattleScene::draw() {
             break;
         case BattleState::PLAYER_SELECT:
             stateText = "Select Action";
+            break;
+        case BattleState::SKILL_SELECT:
+            stateText = "Select Skill (ESC to cancel)";
+            break;
+        case BattleState::ITEM_SELECT:
+            stateText = "Select Item (ESC to cancel)";
+            break;
+        case BattleState::TARGET_SELECT:
+            stateText = "Select Target (ESC to cancel)";
             break;
         case BattleState::ENEMY_SELECT:
             stateText = "Enemy Thinking...";
@@ -350,10 +568,16 @@ void BattleScene::draw() {
         PartyMember* member = m_party->getActiveMember(i);
         if (member) {
             Color color = member->getStats().isAlive() ? WHITE : RED;
-            DrawText(TextFormat("%s HP: %d/%d",
+            if (m_battleState == BattleState::TARGET_SELECT && m_selectedTarget == static_cast<int>(i) &&
+                (m_selectedSkill && m_selectedSkill->targetsAlly() || m_selectedItem)) {
+                color = YELLOW;
+            }
+            DrawText(TextFormat("%s HP: %d/%d MP: %d/%d",
                 member->getName().c_str(),
                 member->getStats().getHP(),
-                member->getStats().getMaxHP()),
+                member->getStats().getMaxHP(),
+                member->getStats().getMP(),
+                member->getStats().getMaxMP()),
                 50, yPos, 16, color);
             yPos += 25;
         }
@@ -368,7 +592,8 @@ void BattleScene::draw() {
             Enemy* enemy = m_enemyFormation->getEnemy(i);
             if (enemy) {
                 Color color = enemy->getStats().isAlive() ? WHITE : GRAY;
-                if (m_battleState == BattleState::PLAYER_SELECT && i == m_selectedTarget) {
+                if (m_battleState == BattleState::TARGET_SELECT && m_selectedTarget == static_cast<int>(i) &&
+                    (!m_selectedSkill || m_selectedSkill->targetsEnemy())) {
                     color = YELLOW;
                 }
                 DrawText(TextFormat("%s HP: %d/%d",
@@ -389,5 +614,47 @@ void BattleScene::draw() {
             Color color = (i == static_cast<int>(m_selectedCommand)) ? YELLOW : WHITE;
             DrawText(commands[i], 70, 420 + i * 25, 20, color);
         }
+    }
+
+    // Draw skill selection menu
+    if (m_battleState == BattleState::SKILL_SELECT) {
+        BattleActor& actor = m_turnOrder[m_currentActorIndex];
+        PartyMember* member = m_party->getActiveMember(actor.index);
+        if (member) {
+            const auto& skills = member->getSkills();
+            DrawRectangle(50, 300, 400, 250, Fade(PURPLE, 0.5f));
+            DrawText("SKILLS:", 60, 310, 20, WHITE);
+            for (size_t i = 0; i < skills.size(); ++i) {
+                Color color = (i == m_selectedSkillIndex) ? YELLOW : WHITE;
+                bool hasMP = member->getStats().hasEnoughMP(skills[i].getMPCost());
+                if (!hasMP) color = GRAY;
+                DrawText(TextFormat("%s (MP: %d)", skills[i].getName().c_str(), skills[i].getMPCost()),
+                    70, 340 + i * 25, 16, color);
+            }
+        }
+    }
+
+    // Draw item selection menu
+    if (m_battleState == BattleState::ITEM_SELECT) {
+        auto items = m_inventory->getAllItems();
+        std::vector<std::pair<Item, int>> usableItems;
+        for (const auto& pair : items) {
+            if (pair.first.isUsableInBattle()) {
+                usableItems.push_back(pair);
+            }
+        }
+
+        DrawRectangle(50, 300, 400, 250, Fade(GREEN, 0.5f));
+        DrawText("ITEMS:", 60, 310, 20, WHITE);
+        for (size_t i = 0; i < usableItems.size(); ++i) {
+            Color color = (i == m_selectedItemIndex) ? YELLOW : WHITE;
+            DrawText(TextFormat("%s x%d", usableItems[i].first.getName().c_str(), usableItems[i].second),
+                70, 340 + i * 25, 16, color);
+        }
+    }
+
+    // Highlight target in TARGET_SELECT state
+    if (m_battleState == BattleState::TARGET_SELECT) {
+        DrawText("< Use LEFT/RIGHT to select target >", 250, 560, 16, YELLOW);
     }
 }

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A classic JRPG built with C++ and Raylib. The project follows a phased development roadmap (see ROADMAP.md). Phase 1 (Foundation), Phase 2 (Core RPG Mechanics), and Phase 3 (Battle System) are complete.
+A classic JRPG built with C++ and Raylib. The project follows a phased development roadmap (see ROADMAP.md). Phase 1 (Foundation), Phase 2 (Core RPG Mechanics), Phase 3 (Battle System), and Phase 4 (Progression Systems) are complete.
 
 ## Build Commands
 
@@ -57,12 +57,27 @@ The game uses a modular component architecture where each system is owned by the
 
 - **BattleScene** (`battle_scene.h/cpp`) - Turn-based battle implementation with:
   - Speed-based initiative system (uses Attack stat + random for turn order)
-  - Battle states (Turn Start, Player/Enemy Select, Action Execution, Victory/Defeat/Fled)
-  - Player command menu (Attack, Magic, Item, Defend, Run)
+  - Battle states (Turn Start, Player/Enemy/Skill/Item/Target Select, Action Execution, Victory/Defeat/Fled)
+  - Player command menu (Attack, Magic, Item, Defend, Run) - all commands fully functional
   - Combat math: damage = attacker.attack - defender.defense/2, 90% hit rate, 10% crit rate
+  - Magic system with skill selection, MP cost checking, offensive/healing spells
+  - Item system with inventory integration and consumption
   - Simple enemy AI that targets random alive party members
   - Victory awards EXP to all party members
   - Defeat/flee transitions back to exploration
+
+#### Phase 4 Systems (Progression Systems)
+- **Item** (`item.h/cpp`) - Item class with types (Consumable, KeyItem, Material) and effects (Restore HP/MP, Revive). Includes battle/field usability checks and buy/sell prices.
+
+- **Inventory** (`inventory.h/cpp`) - Party-wide shared inventory with 64 slots. Stack management (max 99 per item), add/remove with quantity tracking, query system for counts and availability.
+
+- **Equipment** (`equipment.h/cpp`) - Equipment types (Weapon, Armor, Accessory) with stat bonuses (Attack, Defense, HP, MP). Buy/sell price support for future shop system.
+
+- **Skill** (`skill.h/cpp`) - Skill system with types (Offensive Magic, Healing Magic, Buff, Debuff) and targets (Single Enemy, All Enemies, Single Ally, All Allies, Self). MP cost and power values. Class-specific skill learning.
+
+- **PartyMember** (extended) - Now includes equipment slots (weapon, armor, accessory) with automatic stat recalculation on equip/unequip. Skill learning and management system.
+
+- **CharacterStats** (extended) - Equipment bonus system with base stats + equipment modifiers. Separate accessors for base and modified stats.
 
 ### Key Coordinate System
 The game uses dual coordinate systems:
@@ -76,7 +91,8 @@ The project follows ROADMAP.md:
 - **Phase 1 (Foundation)** ✅ - Tilemap rendering, sprite system, player movement, collision detection, and camera following
 - **Phase 2 (Core RPG Mechanics)** ✅ - Character stats, party management, unified state/scene management
 - **Phase 3 (Battle System)** ✅ - Turn-based battles, enemy system, combat mechanics, battle UI
-- **Phase 4 (Progression Systems)** - Next: Inventory, equipment, magic/skills
+- **Phase 4 (Progression Systems)** ✅ - Inventory, equipment, magic/skills, leveling with stat growth
+- **Phase 5 (UI & Interaction)** - Next: Menu system, dialog, NPCs, shops
 
 ## Code Patterns
 
@@ -86,7 +102,9 @@ The project follows ROADMAP.md:
 - State transitions use `SceneManager::changeState(GameState)` - single call, enum-based
 - Access other scenes via `SceneManager::getScene(GameState)` - safe, always valid
 - Map data is defined in `ExplorationScene::initializeMap()` for the exploration scene
-- The Party system is initialized with a default "Hero" character in `Game::initializeParty()`
+- The Party system is initialized with 3 test characters (Hero/Warrior, Mage, Cleric) in `Game::initializeParty()`
+- Inventory is initialized with test items (Potions, Hi-Potions, Ethers, Elixirs) in `Game::initializeInventory()`
+- Characters learn class-specific skills on initialization
 - Tile size is 32px, map is 30x20 tiles, window is 800x600px
 - Game::update/draw simply delegate to SceneManager - no state checking needed
 
@@ -101,6 +119,15 @@ The project follows ROADMAP.md:
 
 ### Battle System
 - Battles use the existing BattleScene instance - configure it before transition via `setEnemyFormation()` and `setOnBattleEndCallback()`
+- BattleScene requires both Party* and Inventory* pointers (passed from Game class)
 - Press 'B' in exploration to trigger a test battle (Slime + Goblin)
 - Turn order recalculated each round based on initiative
-- Combat is functional but Magic and Item commands are not yet implemented
+- All 5 battle commands are fully functional:
+  - **Attack** - Physical damage to single enemy
+  - **Magic** - Skill selection menu → target selection → MP consumption and effect (damage or healing)
+  - **Item** - Item selection menu (battle-usable only) → target selection → item consumption and effect
+  - **Defend** - Placeholder (not yet implemented)
+  - **Run** - 50% flee chance
+- UI shows HP/MP for party, navigable with ESC/Backspace to cancel selections
+- Skills show MP cost and gray out when insufficient MP
+- Items show quantity in inventory

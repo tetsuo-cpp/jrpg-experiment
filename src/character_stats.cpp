@@ -5,6 +5,10 @@
 CharacterStats::CharacterStats(int level)
     : m_level(level)
     , m_experience(0)
+    , m_equipmentHPBonus(0)
+    , m_equipmentMPBonus(0)
+    , m_equipmentAttackBonus(0)
+    , m_equipmentDefenseBonus(0)
 {
     calculateStats();
     m_hp = m_maxHP;
@@ -72,4 +76,18 @@ bool CharacterStats::levelUp() {
     m_experienceToNextLevel = calculateExperienceToNextLevel();
 
     return true;
+}
+
+void CharacterStats::setEquipmentBonuses(int hpBonus, int mpBonus, int attackBonus, int defenseBonus) {
+    m_equipmentHPBonus = hpBonus;
+    m_equipmentMPBonus = mpBonus;
+    m_equipmentAttackBonus = attackBonus;
+    m_equipmentDefenseBonus = defenseBonus;
+}
+
+void CharacterStats::clearEquipmentBonuses() {
+    m_equipmentHPBonus = 0;
+    m_equipmentMPBonus = 0;
+    m_equipmentAttackBonus = 0;
+    m_equipmentDefenseBonus = 0;
 }
