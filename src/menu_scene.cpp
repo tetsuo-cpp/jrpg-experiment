@@ -632,6 +632,9 @@ void MenuScene::equipItem(int memberIndex, EquipmentSlot slot, Equipment* equipm
 
     PartyMember* member = activeParty[memberIndex];
 
+    // Create a copy of the new equipment before removing from inventory
+    Equipment* newEquipment = new Equipment(*equipment);
+
     // Unequip current item if any (returns to inventory)
     const Equipment* currentEquip = nullptr;
     switch (slot) {
@@ -650,19 +653,19 @@ void MenuScene::equipItem(int memberIndex, EquipmentSlot slot, Equipment* equipm
         m_inventory->addItem(*currentEquip, 1);
     }
 
-    // Remove from inventory and equip new item
+    // Remove from inventory (this deletes the original)
     m_inventory->removeItem(equipment, 1);
 
-    // Equip new item (transfers ownership from inventory to party member)
+    // Equip the copy (transfers ownership to party member)
     switch (slot) {
         case EquipmentSlot::WEAPON:
-            member->equipWeapon(equipment);
+            member->equipWeapon(newEquipment);
             break;
         case EquipmentSlot::ARMOR:
-            member->equipArmor(equipment);
+            member->equipArmor(newEquipment);
             break;
         case EquipmentSlot::ACCESSORY:
-            member->equipAccessory(equipment);
+            member->equipAccessory(newEquipment);
             break;
     }
 }
