@@ -2,7 +2,6 @@
 
 #include <raylib.h>
 #include <memory>
-#include "state_manager.h"
 #include "scene_manager.h"
 #include "party.h"
 
@@ -31,7 +30,6 @@ private:
     static constexpr int MAP_HEIGHT = 20;
 
     // Game systems
-    std::unique_ptr<StateManager> m_stateManager;
     std::unique_ptr<SceneManager> m_sceneManager;
     std::unique_ptr<Party> m_party;
 };

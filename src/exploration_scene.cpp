@@ -1,13 +1,19 @@
 #include "exploration_scene.h"
+#include "battle_scene.h"
+#include "enemy.h"
+#include "enemy_formation.h"
 #include <raylib.h>
 
-ExplorationScene::ExplorationScene(int screenWidth, int screenHeight, int tileSize, int mapWidth, int mapHeight)
+ExplorationScene::ExplorationScene(int screenWidth, int screenHeight, int tileSize, int mapWidth, int mapHeight,
+                                   SceneManager* sceneManager, Party* party)
     : m_name("exploration")
     , m_screenWidth(screenWidth)
     , m_screenHeight(screenHeight)
     , m_tileSize(tileSize)
     , m_mapWidth(mapWidth)
     , m_mapHeight(mapHeight)
+    , m_sceneManager(sceneManager)
+    , m_party(party)
 {
     m_tilemap = std::make_unique<Tilemap>(mapWidth, mapHeight, tileSize);
     m_player = std::make_unique<Player>(mapWidth / 2, mapHeight / 2, tileSize);
@@ -38,6 +44,11 @@ void ExplorationScene::update(float deltaTime) {
         m_tileSize,
         m_tileSize
     );
+
+    // Press B to trigger a battle (for testing)
+    if (IsKeyPressed(KEY_B)) {
+        startBattle();
+    }
 }
 
 void ExplorationScene::draw() {
@@ -51,6 +62,7 @@ void ExplorationScene::draw() {
     // Draw exploration UI
     DrawText("Exploration Mode", 10, 10, 20, WHITE);
     DrawText("WASD/Arrows to move", 10, 35, 16, LIGHTGRAY);
+    DrawText("Press B for battle (test)", 10, 55, 16, LIGHTGRAY);
 }
 
 void ExplorationScene::initializeMap() {
@@ -82,4 +94,28 @@ void ExplorationScene::initializeMap() {
             }
         }
     }
+}
+
+void ExplorationScene::startBattle() {
+    // Create a test enemy formation
+    auto formation = std::make_unique<EnemyFormation>();
+    formation->addEnemy(std::make_unique<Enemy>("Slime", 1, AIBehavior::AGGRESSIVE));
+    formation->addEnemy(std::make_unique<Enemy>("Goblin", 2, AIBehavior::BALANCED));
+
+    // Get battle scene (it's already created and alive)
+    BattleScene* battleScene = static_cast<BattleScene*>(
+        m_sceneManager->getScene(GameState::BATTLE));
+
+    if (battleScene) {
+        battleScene->setEnemyFormation(std::move(formation));
+
+        // Set callback - capture scene manager pointer (owned by Game, always valid)
+        SceneManager* sceneManager = m_sceneManager;
+        battleScene->setOnBattleEndCallback([sceneManager](bool won) {
+            sceneManager->changeState(GameState::EXPLORATION);
+        });
+    }
+
+    // Transition to battle
+    m_sceneManager->changeState(GameState::BATTLE);
 }

@@ -2,29 +2,39 @@
 
 #include "scene.h"
 #include <memory>
-#include <unordered_map>
-#include <string>
-#include <functional>
+#include <array>
+
+enum class GameState {
+    EXPLORATION,
+    BATTLE,
+    MENU,
+    DIALOG
+};
 
 class SceneManager {
 public:
     SceneManager();
 
-    // Scene registration
-    void registerScene(const std::string& name, std::function<std::unique_ptr<Scene>()> factory);
+    // Scene registration - called once during initialization
+    void registerScene(GameState state, std::unique_ptr<Scene> scene);
 
-    // Scene transitions
-    bool changeScene(const std::string& name);
+    // State transitions
+    void changeState(GameState newState);
+    GameState getCurrentState() const { return m_currentState; }
+    GameState getPreviousState() const { return m_previousState; }
+
+    // Scene access
+    Scene* getScene(GameState state);
+    Scene* getCurrentScene() { return m_currentScene; }
+    const Scene* getCurrentScene() const { return m_currentScene; }
+
+    // Main loop
     void update(float deltaTime);
     void draw();
 
-    // Current scene info
-    Scene* getCurrentScene() { return m_currentScene.get(); }
-    const Scene* getCurrentScene() const { return m_currentScene.get(); }
-    const std::string& getCurrentSceneName() const { return m_currentSceneName; }
-
 private:
-    std::unique_ptr<Scene> m_currentScene;
-    std::string m_currentSceneName;
-    std::unordered_map<std::string, std::function<std::unique_ptr<Scene>()>> m_sceneFactories;
+    std::array<std::unique_ptr<Scene>, 4> m_scenes;
+    Scene* m_currentScene;
+    GameState m_currentState;
+    GameState m_previousState;
 };

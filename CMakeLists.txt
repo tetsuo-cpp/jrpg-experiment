@@ -24,9 +24,11 @@ add_executable(jrpg_game
     src/character_stats.cpp
     src/party_member.cpp
     src/party.cpp
-    src/state_manager.cpp
     src/scene_manager.cpp
     src/exploration_scene.cpp
+    src/enemy.cpp
+    src/enemy_formation.cpp
+    src/battle_scene.cpp
 )
 
 target_include_directories(jrpg_game PRIVATE src)

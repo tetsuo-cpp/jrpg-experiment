@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A classic JRPG built with C++ and Raylib. The project follows a phased development roadmap (see ROADMAP.md). Phase 1 (Foundation) and Phase 2 (Core RPG Mechanics) are complete with character stats, party management, state machine, and scene management systems in place.
+A classic JRPG built with C++ and Raylib. The project follows a phased development roadmap (see ROADMAP.md). Phase 1 (Foundation), Phase 2 (Core RPG Mechanics), and Phase 3 (Battle System) are complete.
 
 ## Build Commands
 
@@ -44,13 +44,25 @@ The game uses a modular component architecture where each system is owned by the
 
 - **Party** (`party.h/cpp`) - Manages the player's party with up to 4 active members and 8 reserve members. Provides party-wide operations like healing all, restoring MP, and gaining experience. Includes member swapping and reserve management.
 
-- **StateManager** (`state_manager.h/cpp`) - Game state machine managing four states: EXPLORATION, BATTLE, MENU, and DIALOG. Supports state transitions with enter/exit callbacks for each state.
+- **SceneManager** (`scene_manager.h/cpp`) - Unified state and scene management using GameState enum (EXPLORATION, BATTLE, MENU, DIALOG). Scenes are created once and kept alive (never destroyed) to avoid memory issues. Direct enum-based transitions via `changeState()`.
 
-- **SceneManager** (`scene_manager.h/cpp`) - Scene management system with factory-based scene registration. Handles scene transitions with proper lifecycle management (onEnter/onExit).
+- **Scene** (`scene.h`) - Abstract base class for all game scenes. Defines the interface for scene lifecycle (onEnter/onExit) and main loop methods (update/draw).
 
-- **Scene** (`scene.h`) - Abstract base class for all game scenes. Defines the interface for scene lifecycle and main loop methods.
+- **ExplorationScene** (`exploration_scene.h/cpp`) - Concrete scene implementation for exploration gameplay. Encapsulates the tilemap, player, and camera systems from Phase 1. Press 'B' to trigger battle transitions.
 
-- **ExplorationScene** (`exploration_scene.h/cpp`) - Concrete scene implementation for exploration gameplay. Encapsulates the tilemap, player, and camera systems from Phase 1.
+#### Phase 3 Systems (Battle System)
+- **Enemy** (`enemy.h/cpp`) - Enemy entities with CharacterStats, AI behavior types (Aggressive, Balanced, Defensive, Support), and reward calculations (EXP/gold based on level).
+
+- **EnemyFormation** (`enemy_formation.h/cpp`) - Manages groups of enemies in battle. Tracks alive count, handles removal of defeated enemies, and calculates total rewards.
+
+- **BattleScene** (`battle_scene.h/cpp`) - Turn-based battle implementation with:
+  - Speed-based initiative system (uses Attack stat + random for turn order)
+  - Battle states (Turn Start, Player/Enemy Select, Action Execution, Victory/Defeat/Fled)
+  - Player command menu (Attack, Magic, Item, Defend, Run)
+  - Combat math: damage = attacker.attack - defender.defense/2, 90% hit rate, 10% crit rate
+  - Simple enemy AI that targets random alive party members
+  - Victory awards EXP to all party members
+  - Defeat/flee transitions back to exploration
 
 ### Key Coordinate System
 The game uses dual coordinate systems:
@@ -62,15 +74,33 @@ Movement interpolates between tile positions for smooth animation. All rendering
 ### Development Phases
 The project follows ROADMAP.md:
 - **Phase 1 (Foundation)** ✅ - Tilemap rendering, sprite system, player movement, collision detection, and camera following
-- **Phase 2 (Core RPG Mechanics)** ✅ - Character stats, party management, state machine, and scene management
-- **Phase 3 (Battle System)** - Next: Turn-based battle, enemy system, combat mechanics
+- **Phase 2 (Core RPG Mechanics)** ✅ - Character stats, party management, unified state/scene management
+- **Phase 3 (Battle System)** ✅ - Turn-based battles, enemy system, combat mechanics, battle UI
+- **Phase 4 (Progression Systems)** - Next: Inventory, equipment, magic/skills
 
 ## Code Patterns
 
 - All game systems use unique_ptr ownership by the Game class
-- The Game class now uses StateManager for game states and SceneManager for scene transitions
-- Scenes are registered via factory functions in `Game::initializeGame()`
+- **Scenes are created once and kept alive** - No destruction/recreation on transitions
+- Scenes registered via `SceneManager::registerScene(GameState, unique_ptr<Scene>)` in `Game::initializeGame()`
+- State transitions use `SceneManager::changeState(GameState)` - single call, enum-based
+- Access other scenes via `SceneManager::getScene(GameState)` - safe, always valid
 - Map data is defined in `ExplorationScene::initializeMap()` for the exploration scene
 - The Party system is initialized with a default "Hero" character in `Game::initializeParty()`
 - Tile size is 32px, map is 30x20 tiles, window is 800x600px
-- State-specific update/draw logic is delegated based on the current GameState
+- Game::update/draw simply delegate to SceneManager - no state checking needed
+
+## Important Design Decisions
+
+### Scene Management Architecture
+- **Scenes stay alive for the entire game** - They are created once during initialization and never destroyed
+- This eliminates use-after-free bugs from self-destruction during scene transitions
+- Callbacks can safely capture SceneManager pointer (owned by Game, always valid)
+- No static members or factory functions needed - direct unique_ptr registration
+- GameState enum is the single source of truth for both state and scene identity
+
+### Battle System
+- Battles use the existing BattleScene instance - configure it before transition via `setEnemyFormation()` and `setOnBattleEndCallback()`
+- Press 'B' in exploration to trigger a test battle (Slime + Goblin)
+- Turn order recalculated each round based on initiative
+- Combat is functional but Magic and Item commands are not yet implemented

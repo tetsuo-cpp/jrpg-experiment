@@ -1,12 +1,14 @@
 #include "game.h"
 #include "exploration_scene.h"
+#include "battle_scene.h"
+#include "enemy.h"
+#include "enemy_formation.h"
 
 Game::Game() : m_running(true) {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "JRPG Game");
     SetTargetFPS(TARGET_FPS);
 
     // Initialize game systems
-    m_stateManager = std::make_unique<StateManager>();
     m_sceneManager = std::make_unique<SceneManager>();
     m_party = std::make_unique<Party>();
 
@@ -27,39 +29,14 @@ void Game::run() {
 
 void Game::update() {
     float deltaTime = GetFrameTime();
-
-    // Update based on current game state
-    if (m_stateManager->isInExploration()) {
-        m_sceneManager->update(deltaTime);
-    }
-    else if (m_stateManager->isInBattle()) {
-        // Battle update logic will go here in Phase 3
-    }
-    else if (m_stateManager->isInMenu()) {
-        // Menu update logic will go here in Phase 5
-    }
-    else if (m_stateManager->isInDialog()) {
-        // Dialog update logic will go here in Phase 5
-    }
+    m_sceneManager->update(deltaTime);
 }
 
 void Game::draw() {
     BeginDrawing();
     ClearBackground(BLACK);
 
-    // Draw based on current game state
-    if (m_stateManager->isInExploration()) {
-        m_sceneManager->draw();
-    }
-    else if (m_stateManager->isInBattle()) {
-        // Battle draw logic will go here in Phase 3
-    }
-    else if (m_stateManager->isInMenu()) {
-        // Menu draw logic will go here in Phase 5
-    }
-    else if (m_stateManager->isInDialog()) {
-        // Dialog draw logic will go here in Phase 5
-    }
+    m_sceneManager->draw();
 
     // Draw FPS counter
     DrawFPS(SCREEN_WIDTH - 80, 10);
@@ -68,15 +45,20 @@ void Game::draw() {
 }
 
 void Game::initializeGame() {
-    // Register scenes
-    m_sceneManager->registerScene("exploration", [this]() {
-        return std::make_unique<ExplorationScene>(
-            SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT
-        );
-    });
+    // Create scenes once (they stay alive for the entire game)
+    m_sceneManager->registerScene(GameState::EXPLORATION,
+        std::make_unique<ExplorationScene>(
+            SCREEN_WIDTH, SCREEN_HEIGHT, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT,
+            m_sceneManager.get(), m_party.get()
+        )
+    );
 
-    // Start in exploration scene
-    m_sceneManager->changeScene("exploration");
+    m_sceneManager->registerScene(GameState::BATTLE,
+        std::make_unique<BattleScene>(m_party.get())
+    );
+
+    // Start in exploration
+    m_sceneManager->changeState(GameState::EXPLORATION);
 }
 
 void Game::initializeParty() {
