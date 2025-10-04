@@ -2,9 +2,9 @@
 
 #include <raylib.h>
 #include <memory>
-#include "tilemap.h"
-#include "player.h"
-#include "camera.h"
+#include "state_manager.h"
+#include "scene_manager.h"
+#include "party.h"
 
 class Game {
 public:
@@ -16,7 +16,8 @@ public:
 private:
     void update();
     void draw();
-    void initializeMap();
+    void initializeGame();
+    void initializeParty();
 
     // Game state
     bool m_running;
@@ -30,7 +31,7 @@ private:
     static constexpr int MAP_HEIGHT = 20;
 
     // Game systems
-    std::unique_ptr<Tilemap> m_tilemap;
-    std::unique_ptr<Player> m_player;
-    std::unique_ptr<GameCamera> m_camera;
+    std::unique_ptr<StateManager> m_stateManager;
+    std::unique_ptr<SceneManager> m_sceneManager;
+    std::unique_ptr<Party> m_party;
 };

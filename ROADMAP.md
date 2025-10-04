@@ -10,11 +10,11 @@ This roadmap outlines the logical progression for building core JRPG systems bef
 5. ✅ **Collision Detection** - Tile-based collision (walls, blocked tiles)
 6. ✅ **Camera System** - Follow player, handle screen boundaries
 
-## Phase 2: Core RPG Mechanics
-7. **Character Stats System** - HP, MP, Attack, Defense, Level, Experience
-8. **Party Management** - Multiple party members, active/reserve parties
-9. **State Machine** - Game states (Exploration, Battle, Menu, Dialog)
-10. **Scene Manager** - Switch between different maps/areas
+## Phase 2: Core RPG Mechanics ✅ COMPLETED
+7. ✅ **Character Stats System** - HP, MP, Attack, Defense, Level, Experience
+8. ✅ **Party Management** - Multiple party members, active/reserve parties
+9. ✅ **State Machine** - Game states (Exploration, Battle, Menu, Dialog)
+10. ✅ **Scene Manager** - Switch between different maps/areas
 
 ## Phase 3: Battle System
 11. **Battle State Foundation** - Turn-based battle structure

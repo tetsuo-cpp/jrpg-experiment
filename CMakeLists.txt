@@ -21,6 +21,12 @@ add_executable(jrpg_game
     src/sprite.cpp
     src/player.cpp
     src/camera.cpp
+    src/character_stats.cpp
+    src/party_member.cpp
+    src/party.cpp
+    src/state_manager.cpp
+    src/scene_manager.cpp
+    src/exploration_scene.cpp
 )
 
 target_include_directories(jrpg_game PRIVATE src)
