@@ -21,6 +21,7 @@ ExplorationScene::ExplorationScene(int screenWidth, int screenHeight, int tileSi
     m_camera = std::make_unique<GameCamera>(screenWidth, screenHeight, mapWidth, mapHeight, tileSize);
 
     initializeMap();
+    initializeNPCs();
 }
 
 void ExplorationScene::onEnter() {
@@ -46,6 +47,9 @@ void ExplorationScene::update(float deltaTime) {
         m_tileSize
     );
 
+    // Check for NPC interaction
+    checkNPCInteraction();
+
     // Press B to trigger a battle (for testing)
     if (IsKeyPressed(KEY_B)) {
         startBattle();
@@ -68,13 +72,19 @@ void ExplorationScene::draw() {
     int camY = m_camera->getOffsetY();
 
     m_tilemap->render(camX, camY);
+
+    // Draw NPCs
+    for (const auto& npc : m_npcs) {
+        npc->render(camX, camY);
+    }
+
     m_player->render(camX, camY);
 
     // Draw exploration UI
     DrawText("Exploration Mode", 10, 10, 20, WHITE);
     DrawText("WASD/Arrows to move", 10, 35, 16, LIGHTGRAY);
-    DrawText("Press B for battle (test)", 10, 55, 16, LIGHTGRAY);
-    DrawText("Press T for dialog (test)", 10, 75, 16, LIGHTGRAY);
+    DrawText("Press SPACE near NPCs to talk", 10, 55, 16, LIGHTGRAY);
+    DrawText("Press B for battle (test)", 10, 75, 16, LIGHTGRAY);
     DrawText("Press ESC/M for menu", 10, 95, 16, LIGHTGRAY);
 }
 
@@ -145,4 +155,44 @@ void ExplorationScene::startDialog() {
 
     // Transition to dialog
     m_sceneManager->changeState(GameState::DIALOG);
+}
+
+void ExplorationScene::initializeNPCs() {
+    // Create test NPCs at various locations on the map
+    // NPC 1: Friendly villager near the center
+    m_npcs.push_back(std::make_unique<NPC>("Villager", 10, 8, 1, m_tileSize));
+
+    // NPC 2: Guard near a wall
+    m_npcs.push_back(std::make_unique<NPC>("Guard", 18, 12, 2, m_tileSize));
+
+    // NPC 3: Merchant in another area
+    m_npcs.push_back(std::make_unique<NPC>("Merchant", 7, 14, 3, m_tileSize));
+}
+
+void ExplorationScene::checkNPCInteraction() {
+    // Check if player presses SPACE or ENTER to interact
+    if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
+        int playerTileX = m_player->getTileX();
+        int playerTileY = m_player->getTileY();
+
+        // Check all NPCs to see if player is adjacent
+        for (const auto& npc : m_npcs) {
+            if (npc->isPlayerAdjacent(playerTileX, playerTileY)) {
+                // Get dialog scene
+                DialogScene* dialogScene = static_cast<DialogScene*>(
+                    m_sceneManager->getScene(GameState::DIALOG));
+
+                if (dialogScene) {
+                    // Start dialog with this NPC's dialog ID
+                    dialogScene->startDialog(npc->getDialogId());
+
+                    // Transition to dialog
+                    m_sceneManager->changeState(GameState::DIALOG);
+                }
+
+                // Only interact with one NPC at a time
+                return;
+            }
+        }
+    }
 }

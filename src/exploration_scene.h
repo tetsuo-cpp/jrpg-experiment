@@ -6,7 +6,9 @@
 #include "camera.h"
 #include "scene_manager.h"
 #include "party.h"
+#include "npc.h"
 #include <memory>
+#include <vector>
 
 class ExplorationScene : public Scene {
 public:
@@ -26,13 +28,16 @@ public:
 
 private:
     void initializeMap();
+    void initializeNPCs();
     void startBattle();
     void startDialog();
+    void checkNPCInteraction();
 
     std::string m_name;
     std::unique_ptr<Tilemap> m_tilemap;
     std::unique_ptr<Player> m_player;
     std::unique_ptr<GameCamera> m_camera;
+    std::vector<std::unique_ptr<NPC>> m_npcs;
 
     int m_screenWidth;
     int m_screenHeight;

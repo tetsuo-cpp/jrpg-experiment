@@ -80,19 +80,42 @@ void Game::initializeGame() {
         m_sceneManager->changeState(GameState::EXPLORATION);
     });
 
-    // Register some test dialogs
-    auto testDialog1 = std::make_unique<Dialog>(1);
-    testDialog1->addLine("Welcome to our village, traveler!", "Village Elder");
-    testDialog1->addLine("We've been having trouble with monsters lately.", "Village Elder");
-    testDialog1->addLine("Could you help us?", "Village Elder");
-    testDialog1->addChoice("Of course, I'll help!", 2);
-    testDialog1->addChoice("Sorry, I'm busy right now.", -1);
-    dialogScene->registerDialog(std::move(testDialog1));
+    // Register NPC dialogs
+    // Dialog 1: Villager - Simple friendly greeting
+    auto villagerDialog = std::make_unique<Dialog>(1);
+    villagerDialog->addLine("Hello there, traveler!", "Villager");
+    villagerDialog->addLine("Beautiful day, isn't it? The weather has been lovely lately.", "Villager");
+    villagerDialog->addLine("Safe travels on your journey!", "Villager");
+    dialogScene->registerDialog(std::move(villagerDialog));
 
-    auto testDialog2 = std::make_unique<Dialog>(2);
-    testDialog2->addLine("Thank you so much! The monsters are to the north.", "Village Elder");
-    testDialog2->addLine("May the spirits guide you on your journey!", "Village Elder");
-    dialogScene->registerDialog(std::move(testDialog2));
+    // Dialog 2: Guard - Quest-related with choices
+    auto guardDialog = std::make_unique<Dialog>(2);
+    guardDialog->addLine("Halt! State your business.", "Guard");
+    guardDialog->addLine("We've been on high alert due to monster attacks.", "Guard");
+    guardDialog->addLine("Are you here to help defend the town?", "Guard");
+    guardDialog->addChoice("Yes, I'll help fight the monsters!", 4);
+    guardDialog->addChoice("No, just passing through.", 5);
+    dialogScene->registerDialog(std::move(guardDialog));
+
+    // Dialog 3: Merchant - Shop preview
+    auto merchantDialog = std::make_unique<Dialog>(3);
+    merchantDialog->addLine("Welcome to my shop!", "Merchant");
+    merchantDialog->addLine("I've got potions, weapons, armor... all the finest goods!", "Merchant");
+    merchantDialog->addLine("Come back when the shop system is ready and I'll sell you anything you need!", "Merchant");
+    dialogScene->registerDialog(std::move(merchantDialog));
+
+    // Dialog 4: Guard - Positive response
+    auto guardPositive = std::make_unique<Dialog>(4);
+    guardPositive->addLine("Excellent! We need brave warriors like you.", "Guard");
+    guardPositive->addLine("The monsters have been spotted near the northern border.", "Guard");
+    guardPositive->addLine("Good luck out there, hero!", "Guard");
+    dialogScene->registerDialog(std::move(guardPositive));
+
+    // Dialog 5: Guard - Negative response
+    auto guardNegative = std::make_unique<Dialog>(5);
+    guardNegative->addLine("I see... well, be careful on the roads.", "Guard");
+    guardNegative->addLine("These are dangerous times.", "Guard");
+    dialogScene->registerDialog(std::move(guardNegative));
 
     m_sceneManager->registerScene(GameState::DIALOG, std::move(dialogScene));
 
