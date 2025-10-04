@@ -9,8 +9,23 @@ PartyMember::PartyMember(const std::string& name, CharacterClass characterClass,
 {
 }
 
+std::string PartyMember::getClassName() const {
+    switch (m_characterClass) {
+        case CharacterClass::WARRIOR:
+            return "Warrior";
+        case CharacterClass::MAGE:
+            return "Mage";
+        case CharacterClass::CLERIC:
+            return "Cleric";
+        case CharacterClass::THIEF:
+            return "Thief";
+        default:
+            return "Unknown";
+    }
+}
+
 bool PartyMember::equipWeapon(std::unique_ptr<Equipment> weapon) {
-    if (!weapon || weapon->getType() != EquipmentType::WEAPON) {
+    if (!weapon || weapon->getEquipmentType() != EquipmentType::WEAPON) {
         return false;
     }
     m_weapon = std::move(weapon);
@@ -19,7 +34,7 @@ bool PartyMember::equipWeapon(std::unique_ptr<Equipment> weapon) {
 }
 
 bool PartyMember::equipArmor(std::unique_ptr<Equipment> armor) {
-    if (!armor || armor->getType() != EquipmentType::ARMOR) {
+    if (!armor || armor->getEquipmentType() != EquipmentType::ARMOR) {
         return false;
     }
     m_armor = std::move(armor);
@@ -28,7 +43,7 @@ bool PartyMember::equipArmor(std::unique_ptr<Equipment> armor) {
 }
 
 bool PartyMember::equipAccessory(std::unique_ptr<Equipment> accessory) {
-    if (!accessory || accessory->getType() != EquipmentType::ACCESSORY) {
+    if (!accessory || accessory->getEquipmentType() != EquipmentType::ACCESSORY) {
         return false;
     }
     m_accessory = std::move(accessory);
@@ -93,4 +108,31 @@ void PartyMember::learnSkill(const Skill& skill) {
 bool PartyMember::hasSkill(const std::string& skillName) const {
     return std::find_if(m_skills.begin(), m_skills.end(),
         [&skillName](const Skill& s) { return s.getName() == skillName; }) != m_skills.end();
+}
+
+bool PartyMember::equipWeapon(Equipment* weapon) {
+    if (!weapon || weapon->getEquipmentType() != EquipmentType::WEAPON) {
+        return false;
+    }
+    m_weapon.reset(weapon);
+    recalculateEquipmentBonuses();
+    return true;
+}
+
+bool PartyMember::equipArmor(Equipment* armor) {
+    if (!armor || armor->getEquipmentType() != EquipmentType::ARMOR) {
+        return false;
+    }
+    m_armor.reset(armor);
+    recalculateEquipmentBonuses();
+    return true;
+}
+
+bool PartyMember::equipAccessory(Equipment* accessory) {
+    if (!accessory || accessory->getEquipmentType() != EquipmentType::ACCESSORY) {
+        return false;
+    }
+    m_accessory.reset(accessory);
+    recalculateEquipmentBonuses();
+    return true;
 }

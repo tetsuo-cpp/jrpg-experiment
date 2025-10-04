@@ -100,6 +100,22 @@ const PartyMember* Party::getReserveMember(int index) const {
     return m_reserveMembers[index].get();
 }
 
+std::vector<PartyMember*> Party::getActiveMembers() {
+    std::vector<PartyMember*> members;
+    for (auto& member : m_activeMembers) {
+        members.push_back(member.get());
+    }
+    return members;
+}
+
+std::vector<const PartyMember*> Party::getActiveMembers() const {
+    std::vector<const PartyMember*> members;
+    for (const auto& member : m_activeMembers) {
+        members.push_back(member.get());
+    }
+    return members;
+}
+
 bool Party::isAllDead() const {
     for (const auto& member : m_activeMembers) {
         if (member->getStats().isAlive()) {

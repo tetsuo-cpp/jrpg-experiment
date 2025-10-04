@@ -5,14 +5,11 @@ Equipment::Equipment(const std::string& name, const std::string& description,
                      int attackBonus, int defenseBonus,
                      int hpBonus, int mpBonus,
                      int buyPrice, int sellPrice)
-    : m_name(name)
-    , m_description(description)
-    , m_type(type)
+    : Item(name, description, ItemType::EQUIPMENT, ItemEffect::NONE, 0, buyPrice, sellPrice)
+    , m_equipmentType(type)
     , m_attackBonus(attackBonus)
     , m_defenseBonus(defenseBonus)
     , m_hpBonus(hpBonus)
     , m_mpBonus(mpBonus)
-    , m_buyPrice(buyPrice)
-    , m_sellPrice(sellPrice)
 {
 }

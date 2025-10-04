@@ -219,12 +219,12 @@ void BattleScene::handleSkillSelect() {
 }
 
 void BattleScene::handleItemSelect() {
-    auto items = m_inventory->getAllItems();
+    auto& items = m_inventory->getItems();
     // Filter to only usable battle items
-    std::vector<std::pair<Item, int>> usableItems;
-    for (const auto& pair : items) {
-        if (pair.first.isUsableInBattle()) {
-            usableItems.push_back(pair);
+    std::vector<const ItemSlot*> usableItems;
+    for (const auto& slot : items) {
+        if (slot.item && slot.item->isUsableInBattle()) {
+            usableItems.push_back(&slot);
         }
     }
 
@@ -250,7 +250,7 @@ void BattleScene::handleItemSelect() {
 
     // Confirm item
     if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
-        m_selectedItem = &usableItems[m_selectedItemIndex].first;
+        m_selectedItem = usableItems[m_selectedItemIndex]->item;
         m_selectedTarget = 0;
         m_battleState = BattleState::TARGET_SELECT;
     }
@@ -411,7 +411,7 @@ void BattleScene::executeAction() {
                                 break;
                         }
                         // Remove item from inventory
-                        m_inventory->removeItem(m_selectedItem->getName(), 1);
+                        m_inventory->removeItem(m_selectedItem, 1);
                     }
                     m_selectedItem = nullptr;
                 }
@@ -636,11 +636,11 @@ void BattleScene::draw() {
 
     // Draw item selection menu
     if (m_battleState == BattleState::ITEM_SELECT) {
-        auto items = m_inventory->getAllItems();
-        std::vector<std::pair<Item, int>> usableItems;
-        for (const auto& pair : items) {
-            if (pair.first.isUsableInBattle()) {
-                usableItems.push_back(pair);
+        auto& items = m_inventory->getItems();
+        std::vector<const ItemSlot*> usableItems;
+        for (const auto& slot : items) {
+            if (slot.item && slot.item->isUsableInBattle()) {
+                usableItems.push_back(&slot);
             }
         }
 
@@ -648,7 +648,7 @@ void BattleScene::draw() {
         DrawText("ITEMS:", 60, 310, 20, WHITE);
         for (size_t i = 0; i < usableItems.size(); ++i) {
             Color color = (i == m_selectedItemIndex) ? YELLOW : WHITE;
-            DrawText(TextFormat("%s x%d", usableItems[i].first.getName().c_str(), usableItems[i].second),
+            DrawText(TextFormat("%s x%d", usableItems[i]->item->getName().c_str(), usableItems[i]->quantity),
                 70, 340 + i * 25, 16, color);
         }
     }

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A classic JRPG built with C++ and Raylib. The project follows a phased development roadmap (see ROADMAP.md). Phase 1 (Foundation), Phase 2 (Core RPG Mechanics), Phase 3 (Battle System), and Phase 4 (Progression Systems) are complete.
+A classic JRPG built with C++ and Raylib. The project follows a phased development roadmap (see ROADMAP.md). Phase 1 (Foundation), Phase 2 (Core RPG Mechanics), Phase 3 (Battle System), Phase 4 (Progression Systems), and Phase 5 Task 1 (Menu System) are complete.
 
 ## Build Commands
 
@@ -67,17 +67,17 @@ The game uses a modular component architecture where each system is owned by the
   - Defeat/flee transitions back to exploration
 
 #### Phase 4 Systems (Progression Systems)
-- **Item** (`item.h/cpp`) - Item class with types (Consumable, KeyItem, Material) and effects (Restore HP/MP, Revive). Includes battle/field usability checks and buy/sell prices.
+- **Item** (`item.h/cpp`) - Item class with types (Consumable, KeyItem, Material, Equipment) and effects (Restore HP/MP, Revive). Includes battle/field usability checks (`isUsableInBattle()`, `isUsableInField()`) and buy/sell prices.
 
-- **Inventory** (`inventory.h/cpp`) - Party-wide shared inventory with 64 slots. Stack management (max 99 per item), add/remove with quantity tracking, query system for counts and availability.
+- **Inventory** (`inventory.h/cpp`) - Party-wide shared inventory with 64 slots using vector-based storage. Uses Item* pointers to support polymorphism (Item and Equipment). Stack management (max 99 per item), add/remove with quantity tracking. Dynamic memory management with proper cleanup in destructor.
 
-- **Equipment** (`equipment.h/cpp`) - Equipment types (Weapon, Armor, Accessory) with stat bonuses (Attack, Defense, HP, MP). Buy/sell price support for future shop system.
+- **Equipment** (`equipment.h/cpp`) - Inherits from Item. Equipment types (Weapon, Armor, Accessory) with stat bonuses (Attack, Defense, HP, MP). Accessed via `getEquipmentType()` to distinguish from base Item type. Buy/sell price support for shop system.
 
 - **Skill** (`skill.h/cpp`) - Skill system with types (Offensive Magic, Healing Magic, Buff, Debuff) and targets (Single Enemy, All Enemies, Single Ally, All Allies, Self). MP cost and power values. Class-specific skill learning.
 
-- **PartyMember** (extended) - Now includes equipment slots (weapon, armor, accessory) with automatic stat recalculation on equip/unequip. Skill learning and management system.
+- **PartyMember** (extended) - Now includes equipment slots (weapon, armor, accessory) with automatic stat recalculation on equip/unequip. Provides both unique_ptr-based and raw pointer equipment methods. Added `getClassName()` helper for UI display. Skill learning and management system.
 
-- **CharacterStats** (extended) - Equipment bonus system with base stats + equipment modifiers. Separate accessors for base and modified stats.
+- **CharacterStats** (extended) - Equipment bonus system with base stats + equipment modifiers. Separate accessors for base and modified stats. HP/MP accessed via `getHP()`/`getMP()`, experience via `getExperience()`/`getExperienceToNextLevel()`.
 
 ### Key Coordinate System
 The game uses dual coordinate systems:
@@ -86,13 +86,24 @@ The game uses dual coordinate systems:
 
 Movement interpolates between tile positions for smooth animation. All rendering functions accept camera offsets to implement scrolling.
 
+#### Phase 5 Systems (UI & Interaction)
+- **MenuScene** (`menu_scene.h/cpp`) - Comprehensive menu system accessible via ESC/M from exploration. Implements:
+  - **Main Menu**: Navigation between Status, Items, Equipment, and Save submenus
+  - **Status Submenu**: View party member stats (name, class, level, EXP, HP/MP, Attack/Defense, equipped items). Navigate between members with arrow keys.
+  - **Items Submenu**: Browse inventory with scrolling (15 items per page). Use consumables on party members for HP/MP restoration. Shows "[Battle only]" indicator for non-field items. Automatic quantity updates and item removal.
+  - **Equipment Submenu**: Three-level navigation (select member → select slot → choose equipment). Equip/unequip weapons, armor, accessories. Shows stat bonuses (ATK+, DEF+, HP+, MP+). Press X to unequip current item. Handles equipment transfer between inventory and party members with proper ownership management.
+  - **Save Submenu**: Placeholder for Phase 6 implementation
+  - Uses callback system to return to exploration scene
+
+- **Party** (extended) - Added `getActiveMembers()` methods that return vectors of PartyMember pointers for UI iteration
+
 ### Development Phases
 The project follows ROADMAP.md:
 - **Phase 1 (Foundation)** ✅ - Tilemap rendering, sprite system, player movement, collision detection, and camera following
 - **Phase 2 (Core RPG Mechanics)** ✅ - Character stats, party management, unified state/scene management
 - **Phase 3 (Battle System)** ✅ - Turn-based battles, enemy system, combat mechanics, battle UI
 - **Phase 4 (Progression Systems)** ✅ - Inventory, equipment, magic/skills, leveling with stat growth
-- **Phase 5 (UI & Interaction)** - Next: Menu system, dialog, NPCs, shops
+- **Phase 5 (UI & Interaction)** - In Progress: ✅ Menu system | Next: Dialog, NPCs, shops
 
 ## Code Patterns
 
@@ -103,7 +114,7 @@ The project follows ROADMAP.md:
 - Access other scenes via `SceneManager::getScene(GameState)` - safe, always valid
 - Map data is defined in `ExplorationScene::initializeMap()` for the exploration scene
 - The Party system is initialized with 3 test characters (Hero/Warrior, Mage, Cleric) in `Game::initializeParty()`
-- Inventory is initialized with test items (Potions, Hi-Potions, Ethers, Elixirs) in `Game::initializeInventory()`
+- Inventory is initialized with test items (consumables: Potions, Hi-Potions, Ethers, Elixirs; equipment: Iron Sword, Steel Sword, Magic Staff, Leather Armor, Chain Mail, Mage Robe, Power Ring, HP Ring) in `Game::initializeInventory()`
 - Characters learn class-specific skills on initialization
 - Tile size is 32px, map is 30x20 tiles, window is 800x600px
 - Game::update/draw simply delegate to SceneManager - no state checking needed
@@ -131,3 +142,14 @@ The project follows ROADMAP.md:
 - UI shows HP/MP for party, navigable with ESC/Backspace to cancel selections
 - Skills show MP cost and gray out when insufficient MP
 - Items show quantity in inventory
+
+### Menu System
+- MenuScene is created and registered in `Game::initializeGame()` with callback to return to exploration
+- Press ESC or M in exploration to open menu
+- **IMPORTANT**: `SetExitKey(KEY_NULL)` is called in Game constructor to disable ESC-to-close-window behavior, allowing ESC to be used for menu navigation
+- All menu navigation uses arrow keys, ENTER/SPACE to confirm, ESC/BACKSPACE to go back
+- Equipment management transfers ownership between inventory (Item* stored in vector) and party members (unique_ptr in PartyMember)
+- When unequipping, creates a copy of Equipment and adds to inventory, then releases the unique_ptr
+- When equipping, removes from inventory (doesn't delete), then transfers raw pointer to party member via `reset()`
+- Item usage in field properly handles HP/MP restoration and item consumption via Inventory::removeItem()
+- Window can only be closed via the OS window close button (not ESC)

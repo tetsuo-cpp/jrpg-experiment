@@ -1,74 +1,121 @@
 #include "inventory.h"
+#include "equipment.h"
+#include <cstring>
 
 Inventory::Inventory(int maxSlots)
     : m_maxSlots(maxSlots)
 {
+    m_items.resize(maxSlots);
+}
+
+Inventory::~Inventory() {
+    // Clean up dynamically allocated items
+    for (auto& slot : m_items) {
+        if (slot.item) {
+            delete slot.item;
+            slot.item = nullptr;
+        }
+    }
 }
 
 bool Inventory::addItem(const Item& item, int quantity) {
     if (quantity <= 0) return false;
 
-    auto it = m_items.find(item.getName());
+    // Check if item already exists in inventory
+    int existingSlot = findSlot(item.getName());
 
-    if (it != m_items.end()) {
-        // Item already exists, add to stack
-        int newQuantity = it->second.second + quantity;
+    if (existingSlot != -1) {
+        // Item exists, add to stack
+        int newQuantity = m_items[existingSlot].quantity + quantity;
         if (newQuantity > MAX_STACK) {
             newQuantity = MAX_STACK;
         }
-        it->second.second = newQuantity;
+        m_items[existingSlot].quantity = newQuantity;
         return true;
     } else {
-        // New item
-        if (isFull()) {
-            return false;  // Inventory full
-        }
+        // Find empty slot
+        for (size_t i = 0; i < m_items.size(); i++) {
+            if (m_items[i].item == nullptr) {
+                // Create a copy of the item
+                if (item.getType() == ItemType::EQUIPMENT) {
+                    const Equipment* equip = static_cast<const Equipment*>(&item);
+                    m_items[i].item = new Equipment(*equip);
+                } else {
+                    m_items[i].item = new Item(item);
+                }
 
-        int addQuantity = (quantity > MAX_STACK) ? MAX_STACK : quantity;
-        m_items[item.getName()] = {item, addQuantity};
-        return true;
+                int addQuantity = (quantity > MAX_STACK) ? MAX_STACK : quantity;
+                m_items[i].quantity = addQuantity;
+                return true;
+            }
+        }
+        // No empty slots
+        return false;
     }
 }
 
-bool Inventory::removeItem(const std::string& itemName, int quantity) {
-    if (quantity <= 0) return false;
+bool Inventory::removeItem(Item* item, int quantity) {
+    if (quantity <= 0 || !item) return false;
 
-    auto it = m_items.find(itemName);
-    if (it == m_items.end()) {
-        return false;  // Item not found
-    }
+    int slot = findSlot(item);
+    if (slot == -1) return false;
 
-    if (it->second.second < quantity) {
+    if (m_items[slot].quantity < quantity) {
         return false;  // Not enough quantity
     }
 
-    it->second.second -= quantity;
+    m_items[slot].quantity -= quantity;
 
-    if (it->second.second == 0) {
-        m_items.erase(it);  // Remove item if quantity reaches 0
+    if (m_items[slot].quantity == 0) {
+        delete m_items[slot].item;
+        m_items[slot].item = nullptr;
     }
 
     return true;
 }
 
 bool Inventory::hasItem(const std::string& itemName) const {
-    return m_items.find(itemName) != m_items.end();
+    return findSlot(itemName) != -1;
 }
 
-int Inventory::getItemCount(const std::string& itemName) const {
-    auto it = m_items.find(itemName);
-    return (it != m_items.end()) ? it->second.second : 0;
+int Inventory::getItemCount(Item* item) const {
+    if (!item) return 0;
+
+    int slot = findSlot(item);
+    return (slot != -1) ? m_items[slot].quantity : 0;
 }
 
-const Item* Inventory::getItem(const std::string& itemName) const {
-    auto it = m_items.find(itemName);
-    return (it != m_items.end()) ? &it->second.first : nullptr;
+Item* Inventory::getItem(const std::string& itemName) {
+    int slot = findSlot(itemName);
+    return (slot != -1) ? m_items[slot].item : nullptr;
 }
 
-std::vector<std::pair<Item, int>> Inventory::getAllItems() const {
-    std::vector<std::pair<Item, int>> result;
-    for (const auto& pair : m_items) {
-        result.push_back({pair.second.first, pair.second.second});
+int Inventory::getUsedSlots() const {
+    int count = 0;
+    for (const auto& slot : m_items) {
+        if (slot.item != nullptr) {
+            count++;
+        }
     }
-    return result;
+    return count;
+}
+
+int Inventory::findSlot(const std::string& itemName) const {
+    for (size_t i = 0; i < m_items.size(); i++) {
+        if (m_items[i].item && m_items[i].item->getName() == itemName) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
+}
+
+int Inventory::findSlot(Item* item) const {
+    if (!item) return -1;
+
+    for (size_t i = 0; i < m_items.size(); i++) {
+        if (m_items[i].item == item) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
 }

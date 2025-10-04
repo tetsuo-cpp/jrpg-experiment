@@ -95,7 +95,7 @@ private:
     int m_selectedSkillIndex;
     int m_selectedItemIndex;
     const Skill* m_selectedSkill;
-    const Item* m_selectedItem;
+    Item* m_selectedItem;
 
     std::function<void(bool)> m_onBattleEnd;
 };

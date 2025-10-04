@@ -1,6 +1,7 @@
 #include "game.h"
 #include "exploration_scene.h"
 #include "battle_scene.h"
+#include "menu_scene.h"
 #include "enemy.h"
 #include "enemy_formation.h"
 #include "item.h"
@@ -10,6 +11,9 @@
 Game::Game() : m_running(true) {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "JRPG Game");
     SetTargetFPS(TARGET_FPS);
+
+    // Disable ESC key to close window (we use ESC for menus)
+    SetExitKey(KEY_NULL);
 
     // Initialize game systems
     m_sceneManager = std::make_unique<SceneManager>();
@@ -62,6 +66,13 @@ void Game::initializeGame() {
         std::make_unique<BattleScene>(m_party.get(), m_inventory.get())
     );
 
+    // Create menu scene
+    auto menuScene = std::make_unique<MenuScene>(m_party.get(), m_inventory.get());
+    menuScene->setReturnCallback([this]() {
+        m_sceneManager->changeState(GameState::EXPLORATION);
+    });
+    m_sceneManager->registerScene(GameState::MENU, std::move(menuScene));
+
     // Start in exploration
     m_sceneManager->changeState(GameState::EXPLORATION);
 }
@@ -94,7 +105,7 @@ void Game::initializeParty() {
 }
 
 void Game::initializeInventory() {
-    // Add some starting items for testing
+    // Add some starting consumable items for testing
     m_inventory->addItem(Item("Potion", "Restores 50 HP",
         ItemType::CONSUMABLE, ItemEffect::RESTORE_HP, 50, 50, 25), 5);
     m_inventory->addItem(Item("Hi-Potion", "Restores 100 HP",
@@ -103,4 +114,24 @@ void Game::initializeInventory() {
         ItemType::CONSUMABLE, ItemEffect::RESTORE_MP, 30, 80, 40), 3);
     m_inventory->addItem(Item("Elixir", "Fully restores HP and MP",
         ItemType::CONSUMABLE, ItemEffect::RESTORE_BOTH, 9999, 500, 250), 1);
+
+    // Add some equipment for testing
+    m_inventory->addItem(Equipment("Iron Sword", "A basic iron sword",
+        EquipmentType::WEAPON, 15, 0, 0, 0, 100, 50), 1);
+    m_inventory->addItem(Equipment("Steel Sword", "A stronger steel sword",
+        EquipmentType::WEAPON, 25, 0, 0, 0, 250, 125), 1);
+    m_inventory->addItem(Equipment("Magic Staff", "A staff imbued with magic",
+        EquipmentType::WEAPON, 10, 0, 0, 20, 200, 100), 1);
+
+    m_inventory->addItem(Equipment("Leather Armor", "Basic leather protection",
+        EquipmentType::ARMOR, 0, 10, 0, 0, 80, 40), 1);
+    m_inventory->addItem(Equipment("Chain Mail", "Heavy chain armor",
+        EquipmentType::ARMOR, 0, 20, 0, 0, 200, 100), 1);
+    m_inventory->addItem(Equipment("Mage Robe", "Robes for magic users",
+        EquipmentType::ARMOR, 0, 8, 0, 15, 150, 75), 1);
+
+    m_inventory->addItem(Equipment("Power Ring", "Increases attack power",
+        EquipmentType::ACCESSORY, 5, 5, 0, 0, 150, 75), 1);
+    m_inventory->addItem(Equipment("HP Ring", "Increases maximum HP",
+        EquipmentType::ACCESSORY, 0, 0, 50, 0, 120, 60), 1);
 }

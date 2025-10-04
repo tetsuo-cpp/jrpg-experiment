@@ -29,6 +29,7 @@ add_executable(jrpg_game
     src/enemy.cpp
     src/enemy_formation.cpp
     src/battle_scene.cpp
+    src/menu_scene.cpp
     src/item.cpp
     src/inventory.cpp
     src/equipment.cpp

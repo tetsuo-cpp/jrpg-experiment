@@ -5,7 +5,8 @@
 enum class ItemType {
     CONSUMABLE,  // Usable items like potions
     KEY_ITEM,    // Quest/story items
-    MATERIAL     // Crafting materials (for future)
+    MATERIAL,    // Crafting materials (for future)
+    EQUIPMENT    // Weapons, armor, accessories
 };
 
 enum class ItemEffect {

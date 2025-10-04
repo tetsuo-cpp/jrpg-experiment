@@ -21,6 +21,10 @@ public:
     PartyMember* getReserveMember(int index);
     const PartyMember* getReserveMember(int index) const;
 
+    // Get all active members (for UI iteration)
+    std::vector<PartyMember*> getActiveMembers();
+    std::vector<const PartyMember*> getActiveMembers() const;
+
     int getActiveCount() const { return static_cast<int>(m_activeMembers.size()); }
     int getReserveCount() const { return static_cast<int>(m_reserveMembers.size()); }
     int getTotalCount() const { return getActiveCount() + getReserveCount(); }

@@ -21,6 +21,7 @@ public:
     // Accessors
     const std::string& getName() const { return m_name; }
     CharacterClass getCharacterClass() const { return m_characterClass; }
+    std::string getClassName() const;
     CharacterStats& getStats() { return m_stats; }
     const CharacterStats& getStats() const { return m_stats; }
 
@@ -35,6 +36,11 @@ public:
     std::unique_ptr<Equipment> unequipWeapon();
     std::unique_ptr<Equipment> unequipArmor();
     std::unique_ptr<Equipment> unequipAccessory();
+
+    // Equipment management (for menu system using raw pointers from inventory)
+    bool equipWeapon(Equipment* weapon);
+    bool equipArmor(Equipment* armor);
+    bool equipAccessory(Equipment* accessory);
 
     const Equipment* getWeapon() const { return m_weapon.get(); }
     const Equipment* getArmor() const { return m_armor.get(); }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "item.h"
 #include <string>
 
 enum class EquipmentType {
@@ -8,7 +9,7 @@ enum class EquipmentType {
     ACCESSORY
 };
 
-class Equipment {
+class Equipment : public Item {
 public:
     Equipment(const std::string& name, const std::string& description,
               EquipmentType type,
@@ -16,10 +17,8 @@ public:
               int hpBonus = 0, int mpBonus = 0,
               int buyPrice = 0, int sellPrice = 0);
 
-    // Accessors
-    const std::string& getName() const { return m_name; }
-    const std::string& getDescription() const { return m_description; }
-    EquipmentType getType() const { return m_type; }
+    // Equipment-specific accessors
+    EquipmentType getEquipmentType() const { return m_equipmentType; }
 
     // Stat bonuses
     int getAttackBonus() const { return m_attackBonus; }
@@ -27,21 +26,12 @@ public:
     int getHPBonus() const { return m_hpBonus; }
     int getMPBonus() const { return m_mpBonus; }
 
-    // Shop prices
-    int getBuyPrice() const { return m_buyPrice; }
-    int getSellPrice() const { return m_sellPrice; }
-
 private:
-    std::string m_name;
-    std::string m_description;
-    EquipmentType m_type;
+    EquipmentType m_equipmentType;
 
     // Stat modifiers
     int m_attackBonus;
     int m_defenseBonus;
     int m_hpBonus;
     int m_mpBonus;
-
-    int m_buyPrice;
-    int m_sellPrice;
 };

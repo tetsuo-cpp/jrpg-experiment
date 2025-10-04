@@ -49,6 +49,11 @@ void ExplorationScene::update(float deltaTime) {
     if (IsKeyPressed(KEY_B)) {
         startBattle();
     }
+
+    // Press ESC or M to open menu
+    if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_M)) {
+        m_sceneManager->changeState(GameState::MENU);
+    }
 }
 
 void ExplorationScene::draw() {
@@ -63,6 +68,7 @@ void ExplorationScene::draw() {
     DrawText("Exploration Mode", 10, 10, 20, WHITE);
     DrawText("WASD/Arrows to move", 10, 35, 16, LIGHTGRAY);
     DrawText("Press B for battle (test)", 10, 55, 16, LIGHTGRAY);
+    DrawText("Press ESC/M for menu", 10, 75, 16, LIGHTGRAY);
 }
 
 void ExplorationScene::initializeMap() {
