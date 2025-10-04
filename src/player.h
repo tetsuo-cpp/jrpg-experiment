@@ -2,10 +2,11 @@
 
 #include "sprite.h"
 #include "tilemap.h"
+#include <string>
 
 class Player {
 public:
-    Player(int tileX, int tileY, int tileSize);
+    Player(int tileX, int tileY, int tileSize, const std::string& spritePath = "");
     ~Player();
 
     void update(float deltaTime);

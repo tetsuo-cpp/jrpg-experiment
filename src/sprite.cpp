@@ -1,11 +1,34 @@
 #include "sprite.h"
+#include <iostream>
 
 Sprite::Sprite(int width, int height, Color color)
-    : m_width(width), m_height(height), m_color(color),
-      m_currentDirection(Direction::DOWN), m_isAnimating(false),
-      m_currentFrame(0), m_frameTimer(0.0f) {}
+    : m_frameWidth(width), m_frameHeight(height), m_color(color),
+      m_hasTexture(false), m_currentDirection(Direction::DOWN),
+      m_isAnimating(false), m_currentFrame(0), m_frameTimer(0.0f) {
+    m_texture = {0}; // Initialize empty texture
+}
 
-Sprite::~Sprite() {}
+Sprite::Sprite(const std::string& texturePath, int frameWidth, int frameHeight)
+    : m_frameWidth(frameWidth), m_frameHeight(frameHeight), m_color(WHITE),
+      m_hasTexture(false), m_currentDirection(Direction::DOWN),
+      m_isAnimating(false), m_currentFrame(0), m_frameTimer(0.0f) {
+
+    // Try to load texture
+    m_texture = LoadTexture(texturePath.c_str());
+
+    if (m_texture.id > 0) {
+        m_hasTexture = true;
+    } else {
+        std::cerr << "Failed to load sprite texture: " << texturePath << std::endl;
+        m_texture = {0};
+    }
+}
+
+Sprite::~Sprite() {
+    if (m_hasTexture && m_texture.id > 0) {
+        UnloadTexture(m_texture);
+    }
+}
 
 void Sprite::update(float deltaTime) {
     if (m_isAnimating) {
@@ -21,51 +44,73 @@ void Sprite::update(float deltaTime) {
     }
 }
 
-void Sprite::render(int x, int y) {
-    // For now, render as a simple colored rectangle
-    // Later this will use sprite sheets
-    DrawRectangle(x, y, m_width, m_height, m_color);
+void Sprite::render(int x, int y) const {
+    if (m_hasTexture) {
+        // Render from sprite sheet
+        // Sprite sheet layout: 2 columns (frames) x 4 rows (directions)
+        int row = static_cast<int>(m_currentDirection);
+        int col = m_currentFrame;
 
-    // Add a simple border to make it more visible
-    DrawRectangleLines(x, y, m_width, m_height, BLACK);
+        Rectangle sourceRect = {
+            static_cast<float>(col * m_frameWidth),
+            static_cast<float>(row * m_frameHeight),
+            static_cast<float>(m_frameWidth),
+            static_cast<float>(m_frameHeight)
+        };
 
-    // Draw direction indicator (small triangle)
-    Vector2 center = {x + m_width / 2.0f, y + m_height / 2.0f};
-    int indicatorSize = 4;
+        Rectangle destRect = {
+            static_cast<float>(x),
+            static_cast<float>(y),
+            static_cast<float>(m_frameWidth),
+            static_cast<float>(m_frameHeight)
+        };
 
-    switch (m_currentDirection) {
-        case Direction::DOWN:
-            DrawTriangle(
-                {center.x, center.y + indicatorSize},
-                {center.x + indicatorSize, center.y - indicatorSize},
-                {center.x - indicatorSize, center.y - indicatorSize},
-                BLACK
-            );
-            break;
-        case Direction::UP:
-            DrawTriangle(
-                {center.x, center.y - indicatorSize},
-                {center.x - indicatorSize, center.y + indicatorSize},
-                {center.x + indicatorSize, center.y + indicatorSize},
-                BLACK
-            );
-            break;
-        case Direction::LEFT:
-            DrawTriangle(
-                {center.x - indicatorSize, center.y},
-                {center.x + indicatorSize, center.y + indicatorSize},
-                {center.x + indicatorSize, center.y - indicatorSize},
-                BLACK
-            );
-            break;
-        case Direction::RIGHT:
-            DrawTriangle(
-                {center.x + indicatorSize, center.y},
-                {center.x - indicatorSize, center.y - indicatorSize},
-                {center.x - indicatorSize, center.y + indicatorSize},
-                BLACK
-            );
-            break;
+        DrawTexturePro(m_texture, sourceRect, destRect, {0, 0}, 0.0f, WHITE);
+    } else {
+        // Fallback: render as a simple colored rectangle
+        DrawRectangle(x, y, m_frameWidth, m_frameHeight, m_color);
+
+        // Add a simple border to make it more visible
+        DrawRectangleLines(x, y, m_frameWidth, m_frameHeight, BLACK);
+
+        // Draw direction indicator (small triangle)
+        Vector2 center = {x + m_frameWidth / 2.0f, y + m_frameHeight / 2.0f};
+        int indicatorSize = 4;
+
+        switch (m_currentDirection) {
+            case Direction::DOWN:
+                DrawTriangle(
+                    {center.x, center.y + indicatorSize},
+                    {center.x + indicatorSize, center.y - indicatorSize},
+                    {center.x - indicatorSize, center.y - indicatorSize},
+                    BLACK
+                );
+                break;
+            case Direction::UP:
+                DrawTriangle(
+                    {center.x, center.y - indicatorSize},
+                    {center.x - indicatorSize, center.y + indicatorSize},
+                    {center.x + indicatorSize, center.y + indicatorSize},
+                    BLACK
+                );
+                break;
+            case Direction::LEFT:
+                DrawTriangle(
+                    {center.x - indicatorSize, center.y},
+                    {center.x + indicatorSize, center.y + indicatorSize},
+                    {center.x + indicatorSize, center.y - indicatorSize},
+                    BLACK
+                );
+                break;
+            case Direction::RIGHT:
+                DrawTriangle(
+                    {center.x + indicatorSize, center.y},
+                    {center.x - indicatorSize, center.y - indicatorSize},
+                    {center.x - indicatorSize, center.y + indicatorSize},
+                    BLACK
+                );
+                break;
+        }
     }
 }
 

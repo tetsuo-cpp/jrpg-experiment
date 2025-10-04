@@ -1,8 +1,10 @@
 #include "player.h"
 
-Player::Player(int tileX, int tileY, int tileSize)
+Player::Player(int tileX, int tileY, int tileSize, const std::string& spritePath)
     : m_tileX(tileX), m_tileY(tileY), m_tileSize(tileSize),
-      m_sprite(tileSize - 4, tileSize - 4, YELLOW),
+      m_sprite(spritePath.empty() ?
+               Sprite(tileSize - 4, tileSize - 4, YELLOW) :
+               Sprite(spritePath, tileSize, tileSize)),
       m_isMoving(false), m_targetX(tileX), m_targetY(tileY),
       m_moveProgress(0.0f) {
     m_pixelX = tileX * tileSize;

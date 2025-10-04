@@ -2,6 +2,7 @@
 
 #include <raylib.h>
 #include <vector>
+#include <string>
 
 enum class Direction {
     DOWN = 0,
@@ -12,22 +13,31 @@ enum class Direction {
 
 class Sprite {
 public:
+    // Constructor for color-based placeholder sprites
     Sprite(int width, int height, Color color);
+
+    // Constructor for texture-based sprites
+    Sprite(const std::string& texturePath, int frameWidth, int frameHeight);
+
     ~Sprite();
 
     void update(float deltaTime);
-    void render(int x, int y);
+    void render(int x, int y) const;
 
     void setDirection(Direction direction);
     void setAnimating(bool animating);
 
-    int getWidth() const { return m_width; }
-    int getHeight() const { return m_height; }
+    int getWidth() const { return m_frameWidth; }
+    int getHeight() const { return m_frameHeight; }
 
 private:
-    int m_width;
-    int m_height;
+    int m_frameWidth;
+    int m_frameHeight;
     Color m_color;
+
+    // Texture support
+    Texture2D m_texture;
+    bool m_hasTexture;
 
     Direction m_currentDirection;
     bool m_isAnimating;
@@ -35,5 +45,5 @@ private:
     int m_currentFrame;
     float m_frameTimer;
     static constexpr float FRAME_TIME = 0.15f;
-    static constexpr int FRAMES_PER_ANIMATION = 4;
+    static constexpr int FRAMES_PER_ANIMATION = 2;
 };

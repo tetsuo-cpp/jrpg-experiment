@@ -2,6 +2,7 @@
 
 #include <raylib.h>
 #include <vector>
+#include <string>
 
 class Tilemap {
 public:
@@ -11,6 +12,9 @@ public:
     void setTile(int x, int y, int tileId);
     int getTile(int x, int y) const;
     bool isWalkable(int x, int y) const;
+
+    // Load tileset texture
+    void loadTileset(const std::string& tilesetPath, int tilesPerRow);
 
     void render(int cameraOffsetX, int cameraOffsetY);
 
@@ -23,6 +27,11 @@ private:
     int m_height;
     int m_tileSize;
     std::vector<std::vector<int>> m_tiles;
+
+    // Tileset support
+    Texture2D m_tileset;
+    bool m_hasTileset;
+    int m_tilesPerRow;
 
     Color getTileColor(int tileId) const;
 };

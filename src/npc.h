@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sprite.h"
 #include <string>
 
 enum class NPCType {
@@ -9,7 +10,7 @@ enum class NPCType {
 
 class NPC {
 public:
-    NPC(const std::string& name, int tileX, int tileY, int dialogId, int tileSize, NPCType type = NPCType::DIALOG);
+    NPC(const std::string& name, int tileX, int tileY, int dialogId, int tileSize, NPCType type = NPCType::DIALOG, const std::string& spritePath = "");
 
     // Getters
     const std::string& getName() const { return m_name; }
@@ -33,4 +34,5 @@ private:
     int m_tileSize;
     int m_pixelX;
     int m_pixelY;
+    Sprite m_sprite;
 };

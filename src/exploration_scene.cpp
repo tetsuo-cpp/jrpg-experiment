@@ -17,7 +17,13 @@ ExplorationScene::ExplorationScene(int screenWidth, int screenHeight, int tileSi
     , m_party(party)
 {
     m_tilemap = std::make_unique<Tilemap>(mapWidth, mapHeight, tileSize);
-    m_player = std::make_unique<Player>(mapWidth / 2, mapHeight / 2, tileSize);
+
+    // Load tileset if it exists (8 tiles per row is a reasonable default for a small tileset)
+    m_tilemap->loadTileset("assets/tileset.png", 8);
+
+    // Load player sprite if it exists
+    m_player = std::make_unique<Player>(mapWidth / 2, mapHeight / 2, tileSize, "assets/player.png");
+
     m_camera = std::make_unique<GameCamera>(screenWidth, screenHeight, mapWidth, mapHeight, tileSize);
 
     initializeMap();
@@ -159,14 +165,16 @@ void ExplorationScene::startDialog() {
 
 void ExplorationScene::initializeNPCs() {
     // Create test NPCs at various locations on the map
+    // NPCs use single 32x32 pixel sprites (not animated sprite sheets)
+
     // NPC 1: Friendly villager near the center
-    m_npcs.push_back(std::make_unique<NPC>("Villager", 10, 8, 1, m_tileSize, NPCType::DIALOG));
+    m_npcs.push_back(std::make_unique<NPC>("Villager", 10, 8, 1, m_tileSize, NPCType::DIALOG, "assets/villager.png"));
 
     // NPC 2: Guard near a wall
-    m_npcs.push_back(std::make_unique<NPC>("Guard", 18, 12, 2, m_tileSize, NPCType::DIALOG));
+    m_npcs.push_back(std::make_unique<NPC>("Guard", 18, 12, 2, m_tileSize, NPCType::DIALOG, "assets/guard.png"));
 
     // NPC 3: Merchant in another area (triggers shop)
-    m_npcs.push_back(std::make_unique<NPC>("Merchant", 7, 14, 3, m_tileSize, NPCType::SHOP));
+    m_npcs.push_back(std::make_unique<NPC>("Merchant", 7, 14, 3, m_tileSize, NPCType::SHOP, "assets/merchant.png"));
 }
 
 void ExplorationScene::checkNPCInteraction() {

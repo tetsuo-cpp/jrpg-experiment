@@ -2,13 +2,16 @@
 #include <raylib.h>
 #include <cmath>
 
-NPC::NPC(const std::string& name, int tileX, int tileY, int dialogId, int tileSize, NPCType type)
+NPC::NPC(const std::string& name, int tileX, int tileY, int dialogId, int tileSize, NPCType type, const std::string& spritePath)
     : m_name(name)
     , m_tileX(tileX)
     , m_tileY(tileY)
     , m_dialogId(dialogId)
     , m_type(type)
     , m_tileSize(tileSize)
+    , m_sprite(spritePath.empty() ?
+               Sprite(tileSize - 4, tileSize - 4, (type == NPCType::SHOP) ? ORANGE : BLUE) :
+               Sprite(spritePath, tileSize, tileSize))
 {
     // Convert tile coordinates to pixel coordinates
     m_pixelX = tileX * tileSize;
@@ -29,19 +32,11 @@ void NPC::render(int cameraOffsetX, int cameraOffsetY) const {
     int screenX = m_pixelX - cameraOffsetX + 2;
     int screenY = m_pixelY - cameraOffsetY + 2;
 
-    // Draw NPC with different colors based on type
-    int npcSize = m_tileSize - 4;
-    Color npcColor = (m_type == NPCType::SHOP) ? ORANGE : BLUE;
-    DrawRectangle(screenX, screenY, npcSize, npcSize, npcColor);
-
-    // Draw a simple face-like pattern to distinguish from walls
-    int eyeSize = npcSize / 8;
-    int eyeOffsetX = npcSize / 4;
-    int eyeOffsetY = npcSize / 3;
-    DrawCircle(screenX + eyeOffsetX, screenY + eyeOffsetY, eyeSize, WHITE);
-    DrawCircle(screenX + npcSize - eyeOffsetX, screenY + eyeOffsetY, eyeSize, WHITE);
+    // Render sprite
+    m_sprite.render(screenX, screenY);
 
     // Draw name label above NPC
+    int npcSize = m_tileSize - 4;
     int textWidth = MeasureText(m_name.c_str(), 10);
     DrawText(m_name.c_str(), screenX + (npcSize - textWidth) / 2, screenY - 15, 10, WHITE);
 }
